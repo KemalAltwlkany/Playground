@@ -4,6 +4,41 @@ import time as time
 
 epsilon = 0.00000001
 
+class MyEvaluationError(LookupError):
+    """Raise this error kemo"""
+
+class ProblemSpace2:
+
+    eps = 0.06
+
+    def __init__(self):
+        self.x = random.uniform(-2, 0)
+        self.y = self.compute_value()
+
+    def compute_value(self):
+        self.y = pow(self.x, 8) + 3 * pow(self.x, 6) + 2 * pow(self.x, 5) - 17 * pow(self.x, 4) - 12 * pow(self.x, 3) \
+                 - 11 * pow(self.x, 2) + self.x - 10
+        return self.y
+
+    def set_solution(self, sol):
+        self.x = sol
+        self.compute_value()
+
+    def modify_solution(self):
+        new_x = self.x + random.uniform(-ProblemSpace2.eps, ProblemSpace2.eps)
+        new_crit = pow(new_x, 8) + 3 * pow(new_x, 6) + 2 * pow(new_x, 5) - 17 * pow(new_x, 4) - 12 * pow(new_x, 3) \
+                 - 11 * pow(new_x, 2) + new_x - 10
+        if new_crit - self.get_value() < 0:
+            self.x = new_x
+            self.y = new_crit
+
+    def get_value(self):
+        return self.y
+
+    def get_solution(self):
+        return self.x
+
+
 class ProblemSpace1:
 
     eps = 0.06
@@ -39,14 +74,14 @@ class ProblemSpace1:
 class Kid:
 
     grown_up_age = 4
+    problem_space = ProblemSpace1
 
-    def __init__(self, growing_age, attrib):
-        self.attribute = attrib()
+    def __init__(self):
+        self.attribute = Kid.problem_space()
         self.is_captain = False
         self.age = 0  # should be set to 10 for initial children?
         self.criteria = self.evaluate()
         self.is_new_kid = True  # should be set to False for initial children??
-        Kid.grown_up_age = growing_age
 
     def evaluate(self):
         self.criteria = self.attribute.compute_value()
@@ -82,6 +117,10 @@ class Kid:
     def set_is_captain(self, x):
         self.is_captain = x
 
+    @staticmethod
+    def set_growing_up_age(age):
+        Kid.grown_up_age = age
+
     def print_child_info(self):
         print('------------------------------------------')
         print('The vector is =', self.attribute.x)
@@ -105,3 +144,78 @@ class Kid:
 # a local search, which should be used on the captain
     def local_search(self):
         pass
+
+class Team:
+
+    n_kids = 50
+    home_sender = 2
+    Kid_problem_space = ProblemSpace1
+
+    def __init__(self):
+        self.squad = []
+        self.squad.append(Kid())
+        self.captain = self.squad[0]
+        self.team_value = self.squad[0].get_criteria()
+        for i in range(1,Team.n_kids,1):
+            self.squad.append(Kid())
+            if self.squad[i].get_criteria() - self.captain.get_criteria() < 0:
+                self.captain = self.squad[i]
+            self.team_value += self.squad[i]
+        self.captain.set_is_captain(True)
+        self.team_value /= Team.n_kids
+
+    def sort_team(self, sort_type):
+        self.squad.sort(key=Kid.get_criteria(), reverse=sort_type)
+
+# method presupposes that the team is sorted into descending order
+    def send_kids_home(self):
+        new_team = []
+        n_sent = 0
+        for kid in self.squad:
+            if not kid.get_is_new_kid() and n_sent != Team.home_sender:
+                n_sent += 1
+                if kid.get_is_captain():
+                    raise MyEvaluationError('Error! Captain got sent home!')
+                continue
+            else:
+                new_team.append(copy.deepcopy(kid))
+        self.squad = list(reversed(new_team))
+# the result is a squad list but with not enough children. adding them should be done
+# using binary insertion for efficiency
+
+    def add_new_kids(self):
+        for i in range(Team.n_kids - len(self.squad)):
+            self.squad.append(Kid())
+            # nice place for binary insertion
+            if self.squad[-1].get_criteria() - self.captain.get_criteria() < 0:
+                self.captain.set_is_captain(False)
+                self.squad[-1].set_is_captain(True)
+
+# also increments age of every kid
+    def modify(self):
+        self.team_value = 0
+        for kid in self.squad:
+            kid.modify_kid()
+            kid.increment_age()
+            if kid.get_criteria() - self.captain.get_criteria() < 0:
+                self.captain.set_is_captain(False)
+                kid.set_is_captain(True)
+                self.captain = kid
+            self.team_value += kid.get_criteria()
+        self.team_value /= Team.n_kids
+
+    def print_team_info(self):
+        print("Team has =", Team.n_kids, " kids.")
+        print("Team value is =", self.team_value)
+        print("Team captain is: ")
+        self.captain.print_child_info()
+
+    def print_rooster(self):
+        print("Kids currently in team: ")
+        for kid in self.squad:
+            kid.print_child_info()
+
+
+
+
+
