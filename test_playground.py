@@ -53,7 +53,24 @@ class TestChildClass(unittest.TestCase):
 class TestTeamClass(unittest.TestCase):
 
     def test_constructor(self):
-        pass
-
-
-
+        for i in range(10, 1000, 5):
+            Team.n_kids = i
+            Team.home_sender = i/5
+            if i % 2 == 0:
+                Team.Kid_problem_space = ProblemSpace1
+            else:
+                Team.Kid_problem_space = ProblemSpace2
+            team_object = Team()
+            old_value = team_object.team_value
+            team_object.modify()
+            self.assertLessEqual(team_object.team_value, old_value)
+            team_object.sort_team(True)
+            team_object.send_kids_home()
+            self.assertEqual(len(team_object.squad), Team.n_kids - Team.home_sender)
+            team_object.add_new_kids()
+            self.assertEqual(len(team_object.squad), Team.n_kids)
+            no_caps = 0
+            for x in team_object.squad:
+                if x.get_is_captain() is True:
+                    no_caps += 1
+            self.assertEqual(1, no_caps)

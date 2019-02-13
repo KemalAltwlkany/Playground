@@ -156,16 +156,22 @@ class Team:
         self.squad.append(Kid())
         self.captain = self.squad[0]
         self.team_value = self.squad[0].get_criteria()
-        for i in range(1,Team.n_kids,1):
+        self.squad[0].set_age(Kid.grown_up_age)
+        self.captain_ind = 0
+        for i in range(1, Team.n_kids, 1):
             self.squad.append(Kid())
-            if self.squad[i].get_criteria() - self.captain.get_criteria() < 0:
+            self.squad[i].set_age(Kid.grown_up_age) # initial kids should all be prone to modifications
+            if self.squad[i].get_criteria() - self.squad[self.captain_ind].get_criteria() < 0:
                 self.captain = self.squad[i]
-            self.team_value += self.squad[i]
-        self.captain.set_is_captain(True)
+                self.captain_ind = i
+            self.team_value += self.squad[i].get_criteria()
+        self.squad[self.captain_ind].set_is_captain(True)
         self.team_value /= Team.n_kids
+        if self.check_no_caps() is True:
+            print("Error in constructor")
 
     def sort_team(self, sort_type):
-        self.squad.sort(key=Kid.get_criteria(), reverse=sort_type)
+        self.squad.sort(key=Kid.get_criteria, reverse=sort_type)
 
 # method presupposes that the team is sorted into descending order
     def send_kids_home(self):
@@ -180,6 +186,8 @@ class Team:
             else:
                 new_team.append(copy.deepcopy(kid))
         self.squad = list(reversed(new_team))
+        if self.check_no_caps() is True:
+            print("Error in send_kids_home")
 # the result is a squad list but with not enough children. adding them should be done
 # using binary insertion for efficiency
 
@@ -189,20 +197,25 @@ class Team:
             # nice place for binary insertion
             if self.squad[-1].get_criteria() - self.captain.get_criteria() < 0:
                 self.captain.set_is_captain(False)
-                self.squad[-1].set_is_captain(True)
+                self.captain = self.squad[-1]
+                self.captain.set_is_captain(True)
+        if self.check_no_caps() is True:
+            print("Error in add_new_kids")
 
 # also increments age of every kid
     def modify(self):
         self.team_value = 0
-        for kid in self.squad:
-            kid.modify_kid()
-            kid.increment_age()
-            if kid.get_criteria() - self.captain.get_criteria() < 0:
+        for i in range(Team.n_kids):
+            self.squad[i].modify_kid()
+            self.squad[i].increment_age()
+            if self.squad[i].get_criteria() - self.captain.get_criteria() < 0:
                 self.captain.set_is_captain(False)
-                kid.set_is_captain(True)
-                self.captain = kid
-            self.team_value += kid.get_criteria()
+                self.squad[i].set_is_captain(True)
+                self.captain = self.squad[i]
+            self.team_value += self.squad[i].get_criteria()
         self.team_value /= Team.n_kids
+        if self.check_no_caps() is True:
+            print("Error in modify")
 
     def print_team_info(self):
         print("Team has =", Team.n_kids, " kids.")
@@ -215,6 +228,14 @@ class Team:
         for kid in self.squad:
             kid.print_child_info()
 
+    def check_no_caps(self):
+        cap = 0
+        for kid in self.squad:
+            if kid.get_is_captain() is True:
+                cap += 1
+        if cap > 1:
+            return True
+        return False
 
 
 
