@@ -145,6 +145,7 @@ class Kid:
     def local_search(self):
         pass
 
+
 class Team:
 
     n_kids = 50
@@ -154,86 +155,82 @@ class Team:
     def __init__(self):
         Kid.problem_space = Team.kid_problem_space
         self.squad = []
-        self.squad.append(Kid())
-        self.team_value = self.squad[0].get_criteria()
-        self.squad[0].set_age(Kid.grown_up_age)
-        self.captain = 0
-        for i in range(1, Team.n_kids, 1):
+        self.team_value = 0
+        for i in range(0, Team.n_kids, 1):
             self.squad.append(Kid())
-            self.squad[i].set_age(Kid.grown_up_age)  # initial kids should all be prone to modifications
-            if self.squad[i].get_criteria() - self.squad[self.captain].get_criteria() < 0:
-                self.captain = i
+            self.squad[i].set_age(Kid.grown_up_age)  # initial kids should all be prone to changes
             self.team_value += self.squad[i].get_criteria()
-        self.squad[self.captain].set_is_captain(True)
         self.team_value /= Team.n_kids
 
     def sort_team(self, sort_type):
         self.squad.sort(key=Kid.get_criteria, reverse=sort_type)
-        if sort_type is True:
-            self.captain = Team.n_kids - 1
-        else:
-            self.captain = 0
 
-# method presupposes that the team is sorted into descending order
     def send_kids_home(self):
+        self.sort_team(False)  # sorts into ascending order
         new_team = []
         n_sent = 0
-        for kid in self.squad:
-            if not kid.get_is_new_kid() and n_sent != Team.home_sender:
+        for i in range(Team.n_kids-1, -1, -1):
+            if not self.squad[i].get_is_new_kid() and n_sent != Team.home_sender:
                 n_sent += 1
-                if kid.get_is_captain():
-                    raise MyEvaluationError('Error! Captain got sent home!')
+                if i == 0:
+                    raise MyEvaluationError('Error! Best kid got sent home')
                 continue
             else:
-                new_team.append(copy.deepcopy(kid))
-        # IMPORTANT, reversed the squad because of easier insertion
-        self.squad = list(reversed(new_team))
-        # IMPORTANT, update the captain index because of list truncation & reversion
+                new_team.append(copy.deepcopy(self.squad[i]))
         if n_sent != Team.home_sender:
             raise MyEvaluationError('Not enough kids sent home!')
-        self.captain = 0
-# the result is a squad list but with not enough children. adding them should be done
-# using binary insertion for efficiency
+        self.squad = new_team
 
     def add_new_kids(self):
-        for i in range(Team.n_kids - len(self.squad)):
+        for i in range(Team.home_sender):
             self.squad.append(Kid())
-            # nice place for binary insertion
-            if self.squad[-1].get_criteria() - self.squad[self.captain].get_criteria() < 0:
-                self.squad[self.captain].set_is_captain(False)
-                self.captain = len(self.squad) - 1
-                self.squad[-1].set_is_captain(True)
 
-# also increments age of every kid
     def modify(self):
         self.team_value = 0
         for i in range(Team.n_kids):
             self.squad[i].modify_kid()
             self.squad[i].increment_age()
-            if self.squad[i].get_criteria() - self.squad[self.captain].get_criteria() < 0:
-                self.squad[self.captain].set_is_captain(False)
-                self.squad[i].set_is_captain(True)
-                self.captain = i
             self.team_value += self.squad[i].get_criteria()
         self.team_value /= Team.n_kids
 
+    # presupposes that the team is sorted into ascending order
     def print_team_info(self):
         print("Team has =", Team.n_kids, " kids.")
         print("Team value is =", self.team_value)
         print("Team captain is: ")
-        self.captain.print_child_info()
+        self.squad[0].print_child_info()
 
     def print_rooster(self):
         print("Kids currently in team: ")
         for kid in self.squad:
             kid.print_child_info()
 
-    def check_no_caps(self):
-        cap = 0
-        for kid in self.squad:
-            if kid.get_is_captain() is True:
-                cap += 1
-        if cap > 1:
-            return True
-        return False
+class Playground:
 
+    def __init__(self, x, y, z, p, q):
+        Team.n_kids = x
+        Team.home_sender = y
+        Team.kid_problem_space = z
+        self.max_iter = p
+        Kid.grown_up_age = q
+        self.teams = []
+        for i in range(4):
+            self.teams.append(Team())
+
+    def search(self):
+        for i in range(self.max_iter):
+            for j in range(4):
+                self.teams[j].modify()
+                self.teams[j].send_kids_home()
+                self.teams[j].add_new_kids()
+        for i in range(4):
+            print("Final solution for team ", i)
+            self.teams[i].sort_team(False)
+            self.teams[i].print_team_info()
+
+def commit():
+    play_space = Playground(150, 6, ProblemSpace1, 100, 5)
+    play_space.search()
+
+
+commit()
