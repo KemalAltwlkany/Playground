@@ -1,6 +1,6 @@
 import unittest
 
-from teams2 import *
+from basic_playground import *
 
 class TestChildClass(unittest.TestCase):
 
@@ -52,28 +52,62 @@ class TestChildClass(unittest.TestCase):
 
 class TestTeamClass(unittest.TestCase):
 
-    # tests basic functionality of the class
-    def test_constructor(self):
-        for i in range(100, 1000, 5):
-            Team.n_kids = i
-            Team.home_sender = 2
-            if i % 2 == 0:
-                Team.kid_problem_space = ProblemSpace1
-                print(i, " Problem space 1")
-            else:
+    #  This test checks if the insertion which is being done in the add_new_kids method keeps the order
+    #  of the Team.squad list. The order should be ascending.
+    def test_insertion(self):
+        Team.n_kids = 200
+        Team.home_sender = 50
+        for i in range(100):
+            if i > 50:
                 Team.kid_problem_space = ProblemSpace2
-                print(i, " Problem space 2")
             team_object = Team()
-            old_value = team_object.team_value
             team_object.modify()
-            self.assertLessEqual(team_object.team_value, old_value)
-            team_object.sort_team(True)
+            team_object.send_kids_home()
+            team_object.add_new_kids()
+            for j in range(Team.n_kids - 1):
+                self.assertLessEqual(team_object.squad[j].get_criteria(), team_object.squad[j+1].get_criteria())
+
+    #   This test check whether the algorithms core methods are valid. That is:
+    #   1.) Team.modify() should never result with a worse team_value after its run
+    #   2.) Team.send_kids_home() should never send home the best solution (otherwise an error would be raised) and the
+    #       number of kids sent home should never exceed the amount defined by the static attribute Team.home_sender
+    #   3.) The number of new kids added should not exceed the amount of kids sent home.
+    def test_algorithm_fundamentals(self):
+        for i in range(500):
+            if i > 250:
+                Team.kid_problem_space = ProblemSpace2
+            Team.n_kids = random.randint(100, 300)
+            Team.home_sender = int(Team.n_kids/20)
+            team_object = Team()
+
+            old_value = team_object.compute_team_value()
+            team_object.modify()
+            new_value = team_object.compute_team_value()
+            self.assertLessEqual(new_value, old_value)
+
             team_object.send_kids_home()
             self.assertEqual(len(team_object.squad), Team.n_kids - Team.home_sender)
             team_object.add_new_kids()
             self.assertEqual(len(team_object.squad), Team.n_kids)
-            no_caps = 1
-            for x in team_object.squad:
-                if x.get_is_captain() is True:
-                    no_caps += 1
-            self.assertEqual(1, no_caps)
+
+    #   This test checks whether the best solution is always kept or updated regardless of which methods are run
+
+    def test_best_solution_inheritance(self):
+        for i in range(100):
+            Team.kid_problem_space = ProblemSpace1
+            Team.n_kids = random.randint(100, 300)
+            Team.home_sender = int(Team.n_kids / 20)
+            team_object = Team()
+
+            for j in range(100):
+                best_sol = team_object.compute_best_value()
+                team_object.modify()
+                new_best = team_object.compute_best_value()
+                self.assertLessEqual(new_best, best_sol)
+                team_object.send_kids_home()
+                best_sol = new_best
+                team_object.add_new_kids()
+                new_best = team_object.compute_best_value()
+                self.assertLessEqual(new_best, best_sol)
+
+
