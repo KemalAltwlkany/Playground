@@ -10,7 +10,7 @@ class MyEvaluationError(LookupError):
 
 class ProblemSpace2:
 
-    eps = 0.06
+    eps = 0.1
 
     def __init__(self):
         self.x = random.uniform(-2, 0)
@@ -42,7 +42,7 @@ class ProblemSpace2:
 
 class ProblemSpace1:
 
-    eps = 0.06
+    eps = 0.1
 
     def __init__(self):
         self.x = [random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10)]
@@ -153,15 +153,15 @@ class Team:
     home_sender = 2
     kid_problem_space = ProblemSpace1
 
-    def __init__(self):
+    def __init__(self, make_team_empty=False):
         Kid.problem_space = Team.kid_problem_space
         self.best_value = None
         self.team_value = None
         self.squad = []
-        for i in range(0, Team.n_kids, 1):
-            self.squad.append(Kid())
-            self.squad[i].set_age(Kid.grown_up_age)  # initial kids should all be prone to changes
-            #  self.team_value += self.squad[i].get_criteria()
+        if make_team_empty is False:
+            for i in range(0, Team.n_kids, 1):
+                self.squad.append(Kid())
+                self.squad[i].set_age(Kid.grown_up_age)  # initial kids should all be prone to changes
 
     def sort_team(self, sort_type):
         self.squad.sort(key=Kid.get_criteria, reverse=sort_type)
@@ -197,15 +197,12 @@ class Team:
             keys.insert(position, new_kid.get_criteria())
             self.squad.insert(position, new_kid)
             self.team_value += new_kid.get_criteria()
-            # if self.squad[-1].get_criteria() - self.best_value < 0:
-            #    self.best_value = self.squad[-1].get_criteria()
-            # not needed anymore because we insert the elements
+            # the list remains sorted!!!!
 
     def modify(self):
         for i in range(Team.n_kids):
             self.squad[i].modify_kid()
             self.squad[i].increment_age()
-            #  self.team_value += self.squad[i].get_criteria()
 
     # presupposes that the team is sorted into ascending order
     def print_team_info(self):
@@ -220,7 +217,7 @@ class Team:
             kid.print_child_info()
 
     def get_best_value(self):
-        return self.best_value
+        return self.squad[0].get_criteria()
 
     def get_team_value(self):
         return self.team_value
@@ -235,13 +232,23 @@ class Team:
 
     #   this method is for testing only. it should not modify any object attributes and it
     #   is inefficient
-
     def compute_best_value(self):
         curr_best = self.squad[0].get_criteria()
         for i in range(1, len(self.squad), 1):
             if self.squad[i].get_criteria() - curr_best < 0:
                 curr_best = self.squad[i].get_criteria()
         return curr_best
+
+    # ------------ advanced methods start from here ------------
+    def add_kid(self, new_kid):
+        self.squad.append(new_kid)
+        self.squad[-1].set_age(Kid.grown_up_age)  # new kids should be initially prone to changes
+
+    def add_kid_slice(self, new_kids):
+        for i in range(len(new_kids)):
+            new_kids[i].set_age(Kid.grown_up_age)
+        self.squad = self.squad + new_kids
+
 
 
 class Playground:
@@ -253,10 +260,10 @@ class Playground:
         self.max_iter = p
         Kid.grown_up_age = q
         self.teams = []
+
+    def basic_search(self):
         for i in range(3):
             self.teams.append(Team())
-
-    def search(self):
         for i in range(self.max_iter):
             for j in range(3):
                 self.teams[j].modify()
@@ -265,13 +272,68 @@ class Playground:
         for tms in self.teams:
             tms.print_team_info()
 
+    def four_team_search(self):
+        for i in range(4):
+            self.teams.append(Team())
+        for i in range(self.max_iter):
+            for j in range(4):
+                self.teams[j].modify()
+                self.teams[j].send_kids_home()
+                self.teams[j].add_new_kids()
+            self.teams.sort(key=Team.get_best_value)
+
+            if i % 2 == 0:
+                # original idea
+                new_ratings = [self.teams.pop(0)]
+                self.teams.sort(key=Team.get_team_value)
+                new_ratings.append(self.teams.pop(0))
+                if self.teams[0].get_best_value() - self.teams[1].get_best_value() > 0:
+                    self.teams[0], self.teams[1] = self.teams[1], self.teams[0]
+                self.teams = new_ratings + self.teams
+                #    1st team has best captain, 2nd team has best team value
+                #    3rd team has a better captain compared to the 4th team
+                #    this does not mean that team 2 has a better captain compared to team 3 nor 4
+            #   modified idea
+            else:
+                self.teams.sort(key=Team.get_team_value)
+
+            self.construct_teams()
+
+        for tms in self.teams:
+            tms.print_team_info()  # last team criteria is not of use anyways
+
+    def construct_teams(self):
+        new_teams = [Team(make_team_empty=True), Team(make_team_empty=True), Team(make_team_empty=True), Team(make_team_empty=True)]
+        # presuppose that the number of kids per team is divisible by 4
+        kn = int(Team.n_kids / 4)
+        for i in range(4):
+            new_teams[0].add_kid_slice(self.teams[i].squad[0:kn])
+            new_teams[1].add_kid_slice(self.teams[i].squad[kn:2*kn])
+            new_teams[2].add_kid_slice(self.teams[i].squad[2*kn:3*kn])
+            new_teams[3].add_kid_slice(self.teams[i].squad[3*kn:])
+
 
 def commit():
-    play_space = Playground(150, 8, ProblemSpace1, 550, 5)
+    print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+    print("ooooooooooooooooooooooooooooo SIMPLE ALGORITHM ooooooooooooooooooooooooooooooooooooooooooooooo")
+    print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+    play_space = Playground(80, 10, ProblemSpace1, 1000, 6)
     start = time.time()
-    play_space.search()
+    play_space.basic_search()
     end = time.time()
-    print("The algorithm ran for , t = ", end - start)
+    print("The algorithm ran for, t = ", end - start)
 
+def commit_advanced():
+    print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+    print("ooooooooooooooooooooooooooooo ADVANCED ALGORITHM ooooooooooooooooooooooooooooooooooooooooooooo")
+    print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+    play_space = Playground(80, 10, ProblemSpace1, 1000, 6)
+    start = time.time()
+    play_space.four_team_search()
+    end = time.time()
+    print("The advanced algorithm ran for, t = ", end - start)
 
 commit()
+
+commit_advanced()
+

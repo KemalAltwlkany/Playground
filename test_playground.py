@@ -60,12 +60,13 @@ class TestTeamClass(unittest.TestCase):
         for i in range(100):
             if i > 50:
                 Team.kid_problem_space = ProblemSpace2
-            team_object = Team()
-            team_object.modify()
-            team_object.send_kids_home()
-            team_object.add_new_kids()
-            for j in range(Team.n_kids - 1):
-                self.assertLessEqual(team_object.squad[j].get_criteria(), team_object.squad[j+1].get_criteria())
+            for p in range(10):
+                team_object = Team()
+                team_object.modify()
+                team_object.send_kids_home()
+                team_object.add_new_kids()
+                for j in range(Team.n_kids - 1):
+                    self.assertLessEqual(team_object.squad[j].get_criteria(), team_object.squad[j+1].get_criteria())
 
     #   This test check whether the algorithms core methods are valid. That is:
     #   1.) Team.modify() should never result with a worse team_value after its run
@@ -93,13 +94,13 @@ class TestTeamClass(unittest.TestCase):
     #   This test checks whether the best solution is always kept or updated regardless of which methods are run
 
     def test_best_solution_inheritance(self):
-        for i in range(100):
+        for i in range(50):
             Team.kid_problem_space = ProblemSpace1
             Team.n_kids = random.randint(100, 300)
             Team.home_sender = int(Team.n_kids / 20)
             team_object = Team()
 
-            for j in range(100):
+            for j in range(50):
                 best_sol = team_object.compute_best_value()
                 team_object.modify()
                 new_best = team_object.compute_best_value()
@@ -109,5 +110,20 @@ class TestTeamClass(unittest.TestCase):
                 team_object.add_new_kids()
                 new_best = team_object.compute_best_value()
                 self.assertLessEqual(new_best, best_sol)
+                self.assertEqual(team_object.squad[0].get_criteria(), new_best)
 
+    def test_team_value_update(self):
+        for i in range(500):
+            if i > 250:
+                Team.kid_problem_space = ProblemSpace2
+            Team.n_kids = random.randint(100, 300)
+            Team.home_sender = int(Team.n_kids/20)
+            team_object = Team()
+
+            team_object.modify()
+            team_object.send_kids_home()
+            team_object.add_new_kids()
+            attribute_value = team_object.get_team_value()
+            manually_computed = team_object.compute_team_value()
+            self.assertAlmostEqual(attribute_value, manually_computed, 3)
 
