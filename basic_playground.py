@@ -10,7 +10,7 @@ class MyEvaluationError(LookupError):
 
 class ProblemSpace2:
 
-    eps = 0.1
+    eps = 0.2
 
     def __init__(self):
         self.x = random.uniform(-2, 0)
@@ -32,6 +32,13 @@ class ProblemSpace2:
         if new_crit - self.get_value() < 0:
             self.x = new_x
             self.y = new_crit
+
+    def unconditional_modification(self):
+        new_x = self.x + random.uniform(-ProblemSpace2.eps, ProblemSpace2.eps)
+        new_crit = pow(new_x, 8) + 3 * pow(new_x, 6) + 2 * pow(new_x, 5) - 17 * pow(new_x, 4) - 12 * pow(new_x, 3) \
+                   - 11 * pow(new_x, 2) + new_x - 10
+        self.x = new_x
+        self.y = new_crit
 
     def get_value(self):
         return self.y
@@ -95,7 +102,9 @@ class Kid:
 
 # changes are only accepted if they give a better criteria function
     def modify_kid(self):
-        self.attribute.modify_solution()
+    #   self.attribute.modify_solution()
+    #   self.criteria = self.attribute.get_value()
+        self.attribute.unconditional_modification()
         self.criteria = self.attribute.get_value()
 
     def get_criteria(self):
@@ -303,21 +312,21 @@ class Playground:
             tms.print_team_info()  # last team criteria is not of use anyways
 
     def construct_teams(self):
-        new_teams = [Team(make_team_empty=True), Team(make_team_empty=True), Team(make_team_empty=True), Team(make_team_empty=True)]
+        new_teams = [Team(make_team_empty=True), Team(make_team_empty=True), Team(make_team_empty=True), Team()]
         # presuppose that the number of kids per team is divisible by 4
         kn = int(Team.n_kids / 4)
         for i in range(4):
             new_teams[0].add_kid_slice(self.teams[i].squad[0:kn])
             new_teams[1].add_kid_slice(self.teams[i].squad[kn:2*kn])
             new_teams[2].add_kid_slice(self.teams[i].squad[2*kn:3*kn])
-            new_teams[3].add_kid_slice(self.teams[i].squad[3*kn:])
+            #new_teams[3].add_kid_slice(self.teams[i].squad[3*kn:])
 
 
 def commit():
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
     print("ooooooooooooooooooooooooooooo SIMPLE ALGORITHM ooooooooooooooooooooooooooooooooooooooooooooooo")
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
-    play_space = Playground(80, 10, ProblemSpace1, 1000, 6)
+    play_space = Playground(80, 10, ProblemSpace2, 1000, 6)
     start = time.time()
     play_space.basic_search()
     end = time.time()
@@ -327,11 +336,15 @@ def commit_advanced():
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
     print("ooooooooooooooooooooooooooooo ADVANCED ALGORITHM ooooooooooooooooooooooooooooooooooooooooooooo")
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
-    play_space = Playground(80, 10, ProblemSpace1, 1000, 6)
+    play_space = Playground(200, 5, ProblemSpace2, 1000, 25)
     start = time.time()
     play_space.four_team_search()
     end = time.time()
     print("The advanced algorithm ran for, t = ", end - start)
+
+x = ProblemSpace2()
+x.set_solution(1.527)
+print(x.get_value())
 
 commit()
 
