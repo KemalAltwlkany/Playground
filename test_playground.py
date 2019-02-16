@@ -12,14 +12,6 @@ class TestChildClass(unittest.TestCase):
         self.assertEqual(kid_object.is_new_kid, True)
         self.assertEqual(kid_object.is_captain, False)
 
-    def test_modification(self):
-        kid_object = Kid()
-        for i in range(100):
-            a = kid_object.get_criteria()
-            kid_object.modify_kid()
-            b = kid_object.get_criteria()
-            self.assertGreaterEqual(a,b)
-
     def test_aging(self):
         kid_object = Kid()
         Kid.set_growing_up_age(15)
@@ -45,7 +37,6 @@ class TestChildClass(unittest.TestCase):
     def test_different_attribute(self):
         Kid.problem_space = ProblemSpace2
         self.test_constructor()
-        self.test_modification()
         self.test_aging()
         self.test_operators_initialization()
 
@@ -69,10 +60,9 @@ class TestTeamClass(unittest.TestCase):
                     self.assertLessEqual(team_object.squad[j].get_criteria(), team_object.squad[j+1].get_criteria())
 
     #   This test check whether the algorithms core methods are valid. That is:
-    #   1.) Team.modify() should never result with a worse team_value after its run
-    #   2.) Team.send_kids_home() should never send home the best solution (otherwise an error would be raised) and the
+    #   1.) Team.send_kids_home() should never send home the best solution (otherwise an error would be raised) and the
     #       number of kids sent home should never exceed the amount defined by the static attribute Team.home_sender
-    #   3.) The number of new kids added should not exceed the amount of kids sent home.
+    #   2.) The number of new kids added should not exceed the amount of kids sent home.
     def test_algorithm_fundamentals(self):
         for i in range(500):
             if i > 250:
@@ -81,18 +71,13 @@ class TestTeamClass(unittest.TestCase):
             Team.home_sender = int(Team.n_kids/20)
             team_object = Team()
 
-            old_value = team_object.compute_team_value()
             team_object.modify()
-            new_value = team_object.compute_team_value()
-            self.assertLessEqual(new_value, old_value)
-
             team_object.send_kids_home()
             self.assertEqual(len(team_object.squad), Team.n_kids - Team.home_sender)
             team_object.add_new_kids()
             self.assertEqual(len(team_object.squad), Team.n_kids)
 
     #   This test checks whether the best solution is always kept or updated regardless of which methods are run
-
     def test_best_solution_inheritance(self):
         for i in range(50):
             Team.kid_problem_space = ProblemSpace1
@@ -101,17 +86,15 @@ class TestTeamClass(unittest.TestCase):
             team_object = Team()
 
             for j in range(50):
-                best_sol = team_object.compute_best_value()
                 team_object.modify()
-                new_best = team_object.compute_best_value()
-                self.assertLessEqual(new_best, best_sol)
                 team_object.send_kids_home()
-                best_sol = new_best
+                best_sol = team_object.compute_best_value()
                 team_object.add_new_kids()
                 new_best = team_object.compute_best_value()
                 self.assertLessEqual(new_best, best_sol)
                 self.assertEqual(team_object.squad[0].get_criteria(), new_best)
 
+    #   Tests whether the team values are kept in a descending order
     def test_team_value_update(self):
         for i in range(500):
             if i > 250:

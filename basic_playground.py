@@ -25,18 +25,12 @@ class ProblemSpace2:
         self.x = sol
         self.compute_value()
 
+    #   modification function has been changed!
     def modify_solution(self):
         new_x = self.x + random.uniform(-ProblemSpace2.eps, ProblemSpace2.eps)
         new_crit = pow(new_x, 8) + 3 * pow(new_x, 6) + 2 * pow(new_x, 5) - 17 * pow(new_x, 4) - 12 * pow(new_x, 3) \
                  - 11 * pow(new_x, 2) + new_x - 10
-        if new_crit - self.get_value() < 0:
-            self.x = new_x
-            self.y = new_crit
-
-    def unconditional_modification(self):
-        new_x = self.x + random.uniform(-ProblemSpace2.eps, ProblemSpace2.eps)
-        new_crit = pow(new_x, 8) + 3 * pow(new_x, 6) + 2 * pow(new_x, 5) - 17 * pow(new_x, 4) - 12 * pow(new_x, 3) \
-                   - 11 * pow(new_x, 2) + new_x - 10
+        #if new_crit - self.get_value() < 0:
         self.x = new_x
         self.y = new_crit
 
@@ -63,14 +57,15 @@ class ProblemSpace1:
         self.x = sol
         self.compute_value()
 
+    #   modification function has been changed!
     def modify_solution(self):
         new_x = []
         for i in range(len(self.x)):
             new_x.append(self.x[i] + random.uniform(-ProblemSpace1.eps, ProblemSpace1.eps))
         new_crit = new_x[0]**2 + new_x[1]**2 + new_x[2]**2 + new_x[3]**2 + new_x[4]**2
-        if new_crit - self.get_value() < 0:
-            self.x = new_x
-            self.y = new_crit
+        #if new_crit - self.get_value() < 0:
+        self.x = new_x
+        self.y = new_crit
 
     def get_value(self):
         return self.y
@@ -100,11 +95,8 @@ class Kid:
         if self.age >= Kid.grown_up_age:
             self.is_new_kid = False
 
-# changes are only accepted if they give a better criteria function
     def modify_kid(self):
-    #   self.attribute.modify_solution()
-    #   self.criteria = self.attribute.get_value()
-        self.attribute.unconditional_modification()
+        self.attribute.modify_solution()
         self.criteria = self.attribute.get_value()
 
     def get_criteria(self):
@@ -172,6 +164,9 @@ class Team:
                 self.squad.append(Kid())
                 self.squad[i].set_age(Kid.grown_up_age)  # initial kids should all be prone to changes
 
+        # local minima update
+        self.captain = None
+
     def sort_team(self, sort_type):
         self.squad.sort(key=Kid.get_criteria, reverse=sort_type)
 
@@ -200,15 +195,22 @@ class Team:
         keys = []
         for i in range(Team.n_kids - Team.home_sender):
             keys.append(self.squad[i].get_criteria())
-        for i in range(Team.home_sender):
+        for i in range(Team.home_sender-1):
             new_kid = Kid()
             position = bisect.bisect_right(keys, new_kid.get_criteria())
             keys.insert(position, new_kid.get_criteria())
             self.squad.insert(position, new_kid)
             self.team_value += new_kid.get_criteria()
             # the list remains sorted!!!!
+        #   lastly we add the captain (best solution which was computed/kept from method modify)
+        position = bisect.bisect_right(keys, self.captain.get_criteria())
+        self.squad.insert(position, self.captain)
+        self.team_value += self.captain.get_criteria()
 
     def modify(self):
+        #   the first run should presuppose that the teams are sorted into ascending order. the best solution should be
+        #   copied into the next iteration without checking. next iterations already use a sorted list.
+        self.captain = copy.deepcopy(self.squad[0])
         for i in range(Team.n_kids):
             self.squad[i].modify_kid()
             self.squad[i].increment_age()
@@ -259,7 +261,6 @@ class Team:
         self.squad = self.squad + new_kids
 
 
-
 class Playground:
 
     def __init__(self, x, y, z, p, q):
@@ -269,10 +270,15 @@ class Playground:
         self.max_iter = p
         Kid.grown_up_age = q
         self.teams = []
+        self.n_teams = None
 
+    #   1.) Playground type of search. This search is the simplest. 3 teams are randomly generated. Through each
+    #   iteration, each team is modified, kids are sent home and new ones are added.
     def basic_search(self):
         for i in range(3):
             self.teams.append(Team())
+        for i in range(3):
+            self.teams[i].sort_team(False)
         for i in range(self.max_iter):
             for j in range(3):
                 self.teams[j].modify()
@@ -281,9 +287,16 @@ class Playground:
         for tms in self.teams:
             tms.print_team_info()
 
+    #   2.) Playground type of search. 4 teams are randomly generated. Through each iteration every team is modified,
+    #   kids are sent home and new ones are added. After a few iterations (10), the teams mix and new ones are formed
+    #   so that the 1st team contains best players from the old teams, the 2nd team contains the 2nd best players
+    #   from the old teams and so on. The 4th team is completely random.
+
     def four_team_search(self):
         for i in range(4):
             self.teams.append(Team())
+        for i in range(4):
+            self.teams[i].sort_team(False)
         for i in range(self.max_iter):
             for j in range(4):
                 self.teams[j].modify()
@@ -291,7 +304,7 @@ class Playground:
                 self.teams[j].add_new_kids()
             self.teams.sort(key=Team.get_best_value)
 
-            if i % 2 == 0:
+            if i % 10 == 0:
                 # original idea
                 new_ratings = [self.teams.pop(0)]
                 self.teams.sort(key=Team.get_team_value)
@@ -321,32 +334,83 @@ class Playground:
             new_teams[2].add_kid_slice(self.teams[i].squad[2*kn:3*kn])
             #new_teams[3].add_kid_slice(self.teams[i].squad[3*kn:])
 
+    #   3.) Playground type of search. The number of teams is higher. The initial start consists of generating n
+    #   random teams and sorting them by their best value into ascending order. The teams are kept in a list of teams.
+    #   The first two teams in the list are the two teams with the best value. The teams play
+    #   a match, which consists of performing methods: modification, sending kids home and add new kids.
+    #   Methods are applied on both teams. The team with the worse best value is considered the losing team and
+    #   is appended to the end of the list, the winning team is moved to the first place in the list while the other
+    #   teams are all moved forward one place. Simpler put, the teams go through a cycle by which the winner stays
+    #   on the pitch (on tops of the list), and the losing teams rotate. The algorithm is more efficient since
+    #   only 2 teams are "searched through" per iteration.
 
-def commit():
+    def matchday_search(self, n):
+        self.n_teams = n
+        for i in range(n):
+            self.teams.append(Team())
+        for j in range(n):
+            self.teams[j].sort_team(False)
+            self.teams[j].modify()
+            self.teams[j].send_kids_home()
+            self.teams[j].add_new_kids()
+        self.teams.sort(key=Team.get_best_value)
+        for i in range(self.max_iter):
+            self.play_game()
+        for tms in self.teams:
+            tms.print_team_info()
+
+    def play_game(self):
+        self.teams[0].modify()
+        self.teams[0].send_kids_home()
+        self.teams[0].add_new_kids()
+        self.teams[1].modify()
+        self.teams[1].send_kids_home()
+        self.teams[1].add_new_kids()
+        if self.teams[0].get_best_value() - self.teams[1].get_best_value() < 0:
+            self.teams = [self.teams[0]] + self.teams[2:self.n_teams] + [self.teams[1]]
+        else:
+            self.teams = self.teams[1:self.n_teams] + [self.teams[0]]
+
+
+def commit_basic():
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
     print("ooooooooooooooooooooooooooooo SIMPLE ALGORITHM ooooooooooooooooooooooooooooooooooooooooooooooo")
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
-    play_space = Playground(80, 10, ProblemSpace2, 1000, 6)
+    play_space = Playground(100, 4, ProblemSpace1, 1000, 15)
     start = time.time()
     play_space.basic_search()
     end = time.time()
     print("The algorithm ran for, t = ", end - start)
 
-def commit_advanced():
+def commit_4_team():
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
     print("ooooooooooooooooooooooooooooo ADVANCED ALGORITHM ooooooooooooooooooooooooooooooooooooooooooooo")
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
-    play_space = Playground(200, 5, ProblemSpace2, 1000, 25)
+    play_space = Playground(100, 4, ProblemSpace1, 1000, 15)
+    #   number of kids should be divisible by 4!
     start = time.time()
     play_space.four_team_search()
     end = time.time()
     print("The advanced algorithm ran for, t = ", end - start)
 
-x = ProblemSpace2()
-x.set_solution(1.527)
-print(x.get_value())
+def commit_matchday():
+    print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+    print("ooooooooooooooooooooooooooooo MATCHDAY ALGORITHM ooooooooooooooooooooooooooooooooooooooooooooo")
+    print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+    play_space = Playground(200, 9, ProblemSpace1, 1000, 17)
+    start = time.time()
+    play_space.matchday_search(3)
+    end = time.time()
+    print("The matchday algorithm ran for, t = ", end - start)
 
-commit()
 
-commit_advanced()
+#x = ProblemSpace1()
+#x.set_solution(1.527)
+#print(x.get_value())
+
+commit_basic()
+
+commit_4_team()
+
+commit_matchday()
 
