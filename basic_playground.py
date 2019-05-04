@@ -119,12 +119,16 @@ class Kid:
     def set_is_captain(self, x):
         self.is_captain = x
 
+    def print_optimum_solution(self):
+        print('Vector = ', self.attribute.x)
+        print('Criteria = ', self.criteria)
+
     @staticmethod
     def set_growing_up_age(age):
         Kid.grown_up_age = age
 
     def print_child_info(self):
-        print('------------------------------------------')
+        #   print('------------------------------------------')
         print('The vector is =', self.attribute.x)
         print('Captain = ', self.is_captain)
         print('Child age is = ', self.age)
@@ -139,9 +143,12 @@ class Kid:
         return self.get_criteria() - other.get_criteria() > 0
 
     def __le__(self, other):
-        x = (self.get_criteria() - other.get_criteria() < 0 )
-        y = ( abs(self.get_criteria() - other.get_criteria()) < epsilon )
+        x = (self.get_criteria() - other.get_criteria() < 0)
+        y = (abs(self.get_criteria() - other.get_criteria()) < epsilon)
         return x or y
+
+    def measure_difference(self, other):
+        return self.attribute.measure_difference(other.attribute)
 
 # a local search, which should be used on the captain
     def local_search(self):
@@ -153,6 +160,7 @@ class Team:
     n_kids = 50
     home_sender = 2
     kid_problem_space = ProblemSpace1
+    # kid_problem_space = Kid.problem_space, maj19
 
     def __init__(self, make_team_empty=False):
         Kid.problem_space = Team.kid_problem_space
@@ -202,7 +210,7 @@ class Team:
             self.squad.insert(position, new_kid)
             self.team_value += new_kid.get_criteria()
             # the list remains sorted!!!!
-        #   lastly we add the captain (best solution which was computed/kept from method modify)
+        #   lastly we add the captain (best solution which was computed/kept by method modify)
         position = bisect.bisect_right(keys, self.captain.get_criteria())
         self.squad.insert(position, self.captain)
         self.team_value += self.captain.get_criteria()
@@ -226,6 +234,12 @@ class Team:
         print("Kids currently in team: ")
         for kid in self.squad:
             kid.print_child_info()
+
+    def print_optimum(self):
+        self.squad[0].print_optimum_solution()
+
+    def get_captain(self):
+        return self.squad[0]
 
     def get_best_value(self):
         return self.squad[0].get_criteria()
@@ -263,7 +277,7 @@ class Team:
 
 class Playground:
 
-    def __init__(self, x, y, z, p, q):
+    def __init__(self, x, y, z, p, q, r, t, s):
         Team.n_kids = x
         Team.home_sender = y
         Team.kid_problem_space = z
@@ -271,6 +285,10 @@ class Playground:
         Kid.grown_up_age = q
         self.teams = []
         self.n_teams = None
+        self.min_space_advance = r
+        self.min_crit_advance = t
+        self.tolerance = s
+        self.optimum = None
 
     #   1.) Playground type of search. This search is the simplest. 3 teams are randomly generated. Through each
     #   iteration, each team is modified, kids are sent home and new ones are added.
@@ -354,10 +372,36 @@ class Playground:
             self.teams[j].send_kids_home()
             self.teams[j].add_new_kids()
         self.teams.sort(key=Team.get_best_value)
+        crit_stag = 0
+        space_stag = 0
         for i in range(self.max_iter):
+            curr_best = copy.deepcopy(self.teams[0].get_captain())
             self.play_game()
-        for tms in self.teams:
-            tms.print_team_info()
+            new_best = copy.deepcopy(self.teams[0].get_captain())
+            if curr_best.measure_difference(new_best) - self.min_space_advance < 0:
+                space_stag = space_stag + 1
+                if space_stag > self.tolerance:
+                    print('Termination reason: Stagnation in problem space sense')
+                    print('Algorithm ran for ', i, ' iterations')
+                    break
+            else:
+                space_stag = 0
+            if abs(curr_best.get_criteria() - new_best.get_criteria()) - self.min_crit_advance < 0:
+                crit_stag = crit_stag + 1
+                if crit_stag > self.tolerance:
+                    print('Termination reason: Stagnation in criteria sense')
+                    print('Algorithm ran for ', i, ' iterations')
+                    break
+            else:
+                crit_stag = 0
+        if i == self.max_iter-1:
+            print('Termination reason: maximum iterations')
+        self.teams[0].print_optimum()
+        # prints all solutions
+        # for i in range(len(self.teams)):
+        #    if i == 0:
+        #        print('------Optimum solution-----')
+        #    self.teams[i].print_team_info()
 
     def play_game(self):
         self.teams[0].modify()
@@ -371,6 +415,11 @@ class Playground:
         else:
             self.teams = self.teams[1:self.n_teams] + [self.teams[0]]
 
+    def get_optimum(self):
+        return self.teams[0].get_captain()
+
+    def transfer_captain(self):
+        #to be implemented
 
 def commit_basic():
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
@@ -408,9 +457,9 @@ def commit_matchday():
 #x.set_solution(1.527)
 #print(x.get_value())
 
-commit_basic()
+# commit_basic()
 
-commit_4_team()
+# commit_4_team()
 
-commit_matchday()
+# commit_matchday()
 

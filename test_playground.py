@@ -1,6 +1,7 @@
 import unittest
 
-from basic_playground import *
+from T_de_jong import *
+from T_rastrigin import *
 
 class TestChildClass(unittest.TestCase):
 
@@ -110,3 +111,66 @@ class TestTeamClass(unittest.TestCase):
             manually_computed = team_object.compute_team_value()
             self.assertAlmostEqual(attribute_value, manually_computed, 3)
 
+#   This test cannot fail. It runs the matchday algorithm searching for local minima of the First DeJong function
+#   dimensionality ranges from 1-10
+class TestDeJong(unittest.TestCase):
+
+    def test_2D_DeJong(self):
+        DeJongSpace.n_dimensions = 2
+        playground_obj = Playground(100, 5, DeJongSpace, 1000, 8, 0.0001, 0.0000001, 40)
+        start = time.time()
+        playground_obj.matchday_search(5)
+        end = time.time()
+        print("The matchday algorithm ran for, t = ", end - start)
+
+    def test_multi_dimensional_DeJong(self):
+        for i in range(1, 10):
+            print('------------------Iteration    ', i, '    -----------------')
+            DeJongSpace.n_dimensions = i
+            playground_obj = Playground(50, 5, DeJongSpace, 1000, 5, 0.0001, 0.0000001, 40)
+            start = time.time()
+            playground_obj.matchday_search(4)
+            end = time.time()
+            print("The matchday algorithm ran for, t = ", end - start)
+
+class TestRastrigin(unittest.TestCase):
+
+    def test_multi_dimensional_Rastrigin(self):
+        for i in range(1, 10):
+            print('------------------Iteration    ', i, '    -----------------')
+            RastriginSpace.n_dimensions = i
+            RastriginSpace.up_bound = 5.12
+            RastriginSpace.low_bound = -5.12
+            RastriginSpace.eps = 0.01
+            playground_obj = Playground(120, 10, RastriginSpace, 1000, 10, 0.0001, 0.0000001, 100)
+            start = time.time()
+            playground_obj.matchday_search(8)
+            end = time.time()
+            print("The matchday algorithm ran for, t = ", end - start)
+            print('----->Intensified search on given space<-----')
+            RastriginSpace.up_bound = max(playground_obj.get_optimum().attribute.x)
+            RastriginSpace.low_bound = min(playground_obj.get_optimum().attribute.x)
+            RastriginSpace.eps = 0.01
+            playground_obj = Playground(120, 10, RastriginSpace, 1000, 10, 0.0001, 0.0000001, 100)
+            start = time.time()
+            playground_obj.matchday_search(8)
+            end = time.time()
+            print("The INTENSIFIED matchday algorithm ran for, t = ", end - start)
+
+    def test_intensified_multi_dimensional_Rastrigin(self):
+        for i in range(1, 11):
+            print('>>>>>>>>>>>>>>>>>>>>------->>>>>>>>---------Iteration    ', i, '    --<<<<<<<<<<<<---------<<<<<<<<')
+            RastriginSpace.n_dimensions = i
+            RastriginSpace.up_bound = 5.12
+            RastriginSpace.low_bound = -5.12
+            RastriginSpace.eps = 0.01
+            for j in range(1, 10):
+                print('-----Sub iteration   ', j, '   ---------')
+                playground_obj = Playground(140, 11, RastriginSpace, 1000, 11, 0.0001, 0.0000001, 100)
+                start = time.time()
+                playground_obj.matchday_search(6)
+                end = time.time()
+                print("The matchday algorithm ran for, t = ", end - start)
+                RastriginSpace.up_bound = max(playground_obj.get_optimum().attribute.x)
+                RastriginSpace.low_bound = min(playground_obj.get_optimum().attribute.x)
+                RastriginSpace.eps = RastriginSpace.eps * 0.9
