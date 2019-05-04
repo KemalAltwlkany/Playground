@@ -419,6 +419,7 @@ class Playground:
         return self.teams[0].get_captain()
 
     def transfer_captain(self):
+        pass
         #to be implemented
 
 def commit_basic():
