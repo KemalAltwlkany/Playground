@@ -2,6 +2,7 @@ import unittest
 
 from T_de_jong import *
 from T_rastrigin import *
+from T_Schwefel import *
 
 class TestChildClass(unittest.TestCase):
 
@@ -178,3 +179,27 @@ class TestRastrigin(unittest.TestCase):
                 RastriginSpace.up_bound = max(playground_obj.get_optimum().attribute.x)
                 RastriginSpace.low_bound = min(playground_obj.get_optimum().attribute.x)
                 RastriginSpace.eps = RastriginSpace.eps * 0.9
+
+    def test_rastrigin_v2(self):
+        RastriginSpace.n_dimensions = 4
+        RastriginSpace.up_bound = 5.12
+        RastriginSpace.low_bound = -5.12
+        RastriginSpace.eps = 0.1
+        playground_obj = Playground(50, 5, RastriginSpace, 5000, 7, 0.000000001, 0.0000000001, 100)
+        start = time.time()
+        playground_obj.matchday_search(3)
+        end = time.time()
+        print("The matchday algorithm ran for, t = ", end - start)
+
+class TestSchwefel(unittest.TestCase):
+
+    def test_schwefel(self):
+        SchwefelSpace.n_dimensions = 5
+        SchwefelSpace.up_bound = 500
+        SchwefelSpace.low_bound = -500
+        SchwefelSpace.eps = 20
+        playground_obj = Playground(190, 5, SchwefelSpace, 5000, 35, 0.0001, 0.0001, 300)
+        start = time.time()
+        playground_obj.matchday_search(3)
+        end = time.time()
+        print("The matchday algorithm ran for, t = ", end - start)

@@ -2,6 +2,7 @@ import random as random
 import copy as copy
 import time as time
 import bisect as bisect
+import math as math
 
 epsilon = 0.00000001
 
@@ -144,7 +145,7 @@ class Kid:
 
     def __le__(self, other):
         x = (self.get_criteria() - other.get_criteria() < 0)
-        y = (abs(self.get_criteria() - other.get_criteria()) < epsilon)
+        y = (math.fabs(self.get_criteria() - other.get_criteria()) < epsilon)
         return x or y
 
     def measure_difference(self, other):
@@ -391,7 +392,7 @@ class Playground:
                     break
             else:
                 space_stag = 0
-            if abs(curr_best.get_criteria() - new_best.get_criteria()) - self.min_crit_advance < 0:
+            if math.fabs(curr_best.get_criteria() - new_best.get_criteria()) - self.min_crit_advance < 0:
                 crit_stag = crit_stag + 1
                 if crit_stag > self.tolerance:
                     print('Termination reason: Stagnation in criteria sense')
