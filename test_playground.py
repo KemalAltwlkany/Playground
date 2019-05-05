@@ -158,18 +158,22 @@ class TestRastrigin(unittest.TestCase):
             print("The INTENSIFIED matchday algorithm ran for, t = ", end - start)
 
     def test_intensified_multi_dimensional_Rastrigin(self):
-        for i in range(1, 11):
+        for i in range(6, 8):
             print('>>>>>>>>>>>>>>>>>>>>------->>>>>>>>---------Iteration    ', i, '    --<<<<<<<<<<<<---------<<<<<<<<')
             RastriginSpace.n_dimensions = i
             RastriginSpace.up_bound = 5.12
             RastriginSpace.low_bound = -5.12
             RastriginSpace.eps = 0.01
+            which_search = True
+            previous_best = None
             for j in range(1, 10):
                 print('-----Sub iteration   ', j, '   ---------')
-                playground_obj = Playground(140, 11, RastriginSpace, 1000, 11, 0.0001, 0.0000001, 100)
+                playground_obj = Playground(260, 15, RastriginSpace, 1500 + i*200, 15, 0.00000001, 0.00000001, 100)
                 start = time.time()
-                playground_obj.matchday_search(6)
+                playground_obj.matchday_search(6, which_search, previous_best)
                 end = time.time()
+                which_search = False  # only the first iteration shouldn't transfer the captain
+                previous_best = copy.deepcopy(playground_obj.get_optimum())
                 print("The matchday algorithm ran for, t = ", end - start)
                 RastriginSpace.up_bound = max(playground_obj.get_optimum().attribute.x)
                 RastriginSpace.low_bound = min(playground_obj.get_optimum().attribute.x)

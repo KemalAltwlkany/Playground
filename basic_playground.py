@@ -274,6 +274,9 @@ class Team:
             new_kids[i].set_age(Kid.grown_up_age)
         self.squad = self.squad + new_kids
 
+    def transfer_optimum(self, previous_best):
+        self.squad[-1] = copy.deepcopy(previous_best)
+
 
 class Playground:
 
@@ -362,11 +365,13 @@ class Playground:
     #   on the pitch (on tops of the list), and the losing teams rotate. The algorithm is more efficient since
     #   only 2 teams are "searched through" per iteration.
 
-    def matchday_search(self, n):
+    def matchday_search(self, n, first_run=True, previous_optimum=None):
         self.n_teams = n
         for i in range(n):
             self.teams.append(Team())
         for j in range(n):
+            if first_run is False:
+                self.teams[j].transfer_optimum(previous_optimum)
             self.teams[j].sort_team(False)
             self.teams[j].modify()
             self.teams[j].send_kids_home()
@@ -397,6 +402,7 @@ class Playground:
         if i == self.max_iter-1:
             print('Termination reason: maximum iterations')
         self.teams[0].print_optimum()
+        self.optimum = self.teams[0].get_captain()
         # prints all solutions
         # for i in range(len(self.teams)):
         #    if i == 0:
@@ -417,10 +423,6 @@ class Playground:
 
     def get_optimum(self):
         return self.teams[0].get_captain()
-
-    def transfer_captain(self):
-        pass
-        #to be implemented
 
 def commit_basic():
     print("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
