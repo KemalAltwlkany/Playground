@@ -31,7 +31,7 @@ class ProblemSpace2:
         new_x = self.x + random.uniform(-ProblemSpace2.eps, ProblemSpace2.eps)
         new_crit = pow(new_x, 8) + 3 * pow(new_x, 6) + 2 * pow(new_x, 5) - 17 * pow(new_x, 4) - 12 * pow(new_x, 3) \
                  - 11 * pow(new_x, 2) + new_x - 10
-        #if new_crit - self.get_value() < 0:
+        # if new_crit - self.get_value() < 0:
         self.x = new_x
         self.y = new_crit
 
@@ -40,6 +40,9 @@ class ProblemSpace2:
 
     def get_solution(self):
         return self.x
+
+    def measure_difference(self, other):
+        pass
 
 
 class ProblemSpace1:
@@ -74,6 +77,9 @@ class ProblemSpace1:
     def get_solution(self):
         return self.x
 
+    def measure_difference(self, other):
+        pass
+
 
 class Kid:
 
@@ -83,9 +89,9 @@ class Kid:
     def __init__(self):
         self.attribute = Kid.problem_space()
         self.is_captain = False
-        self.age = 0  # should be set to 10 for initial children?
+        self.age = 0  # should be set to 10 for initial children? -> shouldn't, algorithm should solve that
         self.criteria = self.evaluate()
-        self.is_new_kid = True  # should be set to False for initial children??
+        self.is_new_kid = True  # should be set to False for initial children? -> shouldn't, alg should solve that
 
     def evaluate(self):
         self.criteria = self.attribute.compute_value()
@@ -161,7 +167,6 @@ class Team:
     n_kids = 50
     home_sender = 2
     kid_problem_space = ProblemSpace1
-    # kid_problem_space = Kid.problem_space, maj19
 
     def __init__(self, make_team_empty=False):
         Kid.problem_space = Team.kid_problem_space

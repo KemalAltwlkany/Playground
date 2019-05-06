@@ -194,11 +194,11 @@ class TestRastrigin(unittest.TestCase):
 class TestSchwefel(unittest.TestCase):
 
     def test_schwefel(self):
-        SchwefelSpace.n_dimensions = 5
+        SchwefelSpace.n_dimensions = 20
         SchwefelSpace.up_bound = 500
         SchwefelSpace.low_bound = -500
-        SchwefelSpace.eps = 20
-        playground_obj = Playground(190, 5, SchwefelSpace, 5000, 35, 0.0001, 0.0001, 300)
+        SchwefelSpace.eps = 5
+        playground_obj = Playground(200, 6, SchwefelSpace, 5000, 30, 0.0001, 0.0001, 200)
         start = time.time()
         playground_obj.matchday_search(3)
         end = time.time()

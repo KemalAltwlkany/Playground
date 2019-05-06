@@ -26,14 +26,12 @@ class SchwefelSpace:
         self.y = self.compute_value()
 
     def modify_solution(self):
-        p = random.uniform(0, 1)
-        if p < 0.02:
-            new_x = []
-            for i in range(SchwefelSpace.n_dimensions):
+        new_x = []
+        for i in range(SchwefelSpace.n_dimensions):
+            p = random.uniform(0, 1)
+            if p < 0.05:
                 new_x.append(random.uniform(SchwefelSpace.low_bound, SchwefelSpace.up_bound))
-        else:
-            new_x = []
-            for i in range(SchwefelSpace.n_dimensions):
+            else:
                 new_x.append(self.x[i] + random.uniform(-SchwefelSpace.eps, SchwefelSpace.eps))
                 if new_x[i] - SchwefelSpace.low_bound < 0:
                     new_x[i] = SchwefelSpace.low_bound * random.uniform(0.88, 0.98)
