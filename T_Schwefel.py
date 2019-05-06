@@ -4,7 +4,7 @@ import math as math
 #   global minimum is obtainable for xi=420.9687, f(x)=-418.9829*n
 #   search space is limited to [-500, 500]
 class SchwefelSpace:
-    eps = 0.01
+    eps = 5
     n_dimensions = 10
     up_bound = -500
     low_bound = 500

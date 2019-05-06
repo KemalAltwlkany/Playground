@@ -189,7 +189,6 @@ class Team:
         self.best_value = self.squad[0].get_criteria()
         new_team = []
         n_sent = 0
-        self.team_value = 0
         for i in range(Team.n_kids-1, -1, -1):
             if not self.squad[i].get_is_new_kid() and n_sent != Team.home_sender:
                 n_sent += 1
@@ -198,7 +197,6 @@ class Team:
                 continue
             else:
                 new_team.append(copy.deepcopy(self.squad[i]))
-                self.team_value += self.squad[i].get_criteria()
         new_team = list(reversed(new_team))  # required!!!
         if n_sent != Team.home_sender:
             raise MyEvaluationError('Not enough kids sent home!')
@@ -214,12 +212,10 @@ class Team:
             position = bisect.bisect_right(keys, new_kid.get_criteria())
             keys.insert(position, new_kid.get_criteria())
             self.squad.insert(position, new_kid)
-            self.team_value += new_kid.get_criteria()
             # the list remains sorted!!!!
         #   lastly we add the captain (best solution which was computed/kept by method modify)
         position = bisect.bisect_right(keys, self.captain.get_criteria())
         self.squad.insert(position, self.captain)
-        self.team_value += self.captain.get_criteria()
 
     def modify(self):
         #   the first run should presuppose that the teams are sorted into ascending order. the best solution should be
@@ -361,14 +357,14 @@ class Playground:
             new_teams[2].add_kid_slice(self.teams[i].squad[2*kn:3*kn])
             #new_teams[3].add_kid_slice(self.teams[i].squad[3*kn:])
 
-    #   3.) Playground type of search. The number of teams is higher. The initial start consists of generating n
+    #   3.) 3rd Playground type of search. The number of teams is higher. The initial start consists of generating n
     #   random teams and sorting them by their best value into ascending order. The teams are kept in a list of teams.
     #   The first two teams in the list are the two teams with the best value. The teams play
-    #   a match, which consists of performing methods: modification, sending kids home and add new kids.
+    #   a match, which consists of performing methods: modification, sending kids home and adding new kids.
     #   Methods are applied on both teams. The team with the worse best value is considered the losing team and
     #   is appended to the end of the list, the winning team is moved to the first place in the list while the other
     #   teams are all moved forward one place. Simpler put, the teams go through a cycle by which the winner stays
-    #   on the pitch (on tops of the list), and the losing teams rotate. The algorithm is more efficient since
+    #   on the pitch (on top of the list), and the losing teams rotate. The algorithm is more efficient since
     #   only 2 teams are "searched through" per iteration.
 
     def matchday_search(self, n, first_run=True, previous_optimum=None):

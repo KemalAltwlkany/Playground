@@ -136,65 +136,32 @@ class TestDeJong(unittest.TestCase):
 
 class TestRastrigin(unittest.TestCase):
 
-    def test_multi_dimensional_Rastrigin(self):
-        for i in range(1, 10):
-            print('------------------Iteration    ', i, '    -----------------')
-            RastriginSpace.n_dimensions = i
-            RastriginSpace.up_bound = 5.12
-            RastriginSpace.low_bound = -5.12
-            RastriginSpace.eps = 0.01
-            playground_obj = Playground(120, 10, RastriginSpace, 1000, 10, 0.0001, 0.0000001, 100)
-            start = time.time()
-            playground_obj.matchday_search(8)
-            end = time.time()
-            print("The matchday algorithm ran for, t = ", end - start)
-            print('----->Intensified search on given space<-----')
-            RastriginSpace.up_bound = max(playground_obj.get_optimum().attribute.x)
-            RastriginSpace.low_bound = min(playground_obj.get_optimum().attribute.x)
-            RastriginSpace.eps = 0.01
-            playground_obj = Playground(120, 10, RastriginSpace, 1000, 10, 0.0001, 0.0000001, 100)
-            start = time.time()
-            playground_obj.matchday_search(8)
-            end = time.time()
-            print("The INTENSIFIED matchday algorithm ran for, t = ", end - start)
-
-    def test_intensified_multi_dimensional_Rastrigin(self):
-        for i in range(6, 8):
-            print('>>>>>>>>>>>>>>>>>>>>------->>>>>>>>---------Iteration    ', i, '    --<<<<<<<<<<<<---------<<<<<<<<')
-            RastriginSpace.n_dimensions = i
-            RastriginSpace.up_bound = 5.12
-            RastriginSpace.low_bound = -5.12
-            RastriginSpace.eps = 0.01
-            which_search = True
-            previous_best = None
-            for j in range(1, 10):
-                print('-----Sub iteration   ', j, '   ---------')
-                playground_obj = Playground(260, 15, RastriginSpace, 1500 + i*200, 15, 0.00000001, 0.00000001, 100)
-                start = time.time()
-                playground_obj.matchday_search(6, which_search, previous_best)
-                end = time.time()
-                which_search = False  # only the first iteration shouldn't transfer the captain
-                previous_best = copy.deepcopy(playground_obj.get_optimum())
-                print("The matchday algorithm ran for, t = ", end - start)
-                RastriginSpace.up_bound = max(playground_obj.get_optimum().attribute.x)
-                RastriginSpace.low_bound = min(playground_obj.get_optimum().attribute.x)
-                RastriginSpace.eps = RastriginSpace.eps * 0.9
-
-    def test_rastrigin_v2(self):
-        RastriginSpace.n_dimensions = 4
+    # test a single n-dimensional Rastrigin function
+    def test_single_rastrigin(self, n):
+        RastriginSpace.n_dimensions = n
         RastriginSpace.up_bound = 5.12
         RastriginSpace.low_bound = -5.12
-        RastriginSpace.eps = 0.1
-        playground_obj = Playground(50, 5, RastriginSpace, 5000, 7, 0.000000001, 0.0000000001, 100)
+        RastriginSpace.eps = 0.001
+        playground_obj = Playground(200, 6, RastriginSpace, 5000, 30, 0.00000001, 0.00000001, 300)
         start = time.time()
         playground_obj.matchday_search(3)
         end = time.time()
         print("The matchday algorithm ran for, t = ", end - start)
 
+    # for loop defines which dimensional rastrigin functions are tested
+    def test_multiple_rastrigins(self):
+        print('******************************* RUNNING RASTRIGIN FUNCTION TESTS *************************************')
+        for i in range(1, 21):
+            print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
+            self.test_single_rastrigin(i)
+            print('-------------------------------------------------------------------------------------------')
+        print('*****************************************************************************************************')
+
 class TestSchwefel(unittest.TestCase):
 
-    def test_schwefel(self):
-        SchwefelSpace.n_dimensions = 20
+    # test a single n-dimensional Schwefel function
+    def test_single_schwefel(self, n):
+        SchwefelSpace.n_dimensions = n
         SchwefelSpace.up_bound = 500
         SchwefelSpace.low_bound = -500
         SchwefelSpace.eps = 5
@@ -203,3 +170,33 @@ class TestSchwefel(unittest.TestCase):
         playground_obj.matchday_search(3)
         end = time.time()
         print("The matchday algorithm ran for, t = ", end - start)
+
+    # for loop defines which dimensional schwefel functions are tested
+    def test_multiple_schwefels(self):
+        print('******************************* RUNNING SCHWEFEL FUNCTION TESTS *************************************')
+        for i in range(1, 5):
+            print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
+            self.test_single_schwefel(i)
+            print('-------------------------------------------------------------------------------------------')
+        print('*****************************************************************************************************')
+
+    # test a single n-dimensional Rastrigin function
+    def test_single_rastrigin(self, n):
+        RastriginSpace.n_dimensions = n
+        RastriginSpace.up_bound = 5.12
+        RastriginSpace.low_bound = -5.12
+        RastriginSpace.eps = 0.001
+        playground_obj = Playground(200, 6, RastriginSpace, 5000, 30, 0.00000001, 0.00000001, 300)
+        start = time.time()
+        playground_obj.matchday_search(3)
+        end = time.time()
+        print("The matchday algorithm ran for, t = ", end - start)
+
+    # for loop defines which dimensional rastrigin functions are tested
+    def test_multiple_rastrigins(self):
+        print('******************************* RUNNING RASTRIGIN FUNCTION TESTS *************************************')
+        for i in range(1, 5):
+            print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
+            self.test_single_rastrigin(i)
+            print('-------------------------------------------------------------------------------------------')
+        print('*****************************************************************************************************')
