@@ -4,7 +4,7 @@ import math as math
 #   global minimum is obtainable for xi=420.9687, f(x)=-418.9829*n
 #   search space is limited to [-500, 500]
 class RastriginSpace:
-    eps = 0.512
+    eps = 0.001
     n_dimensions = 10
     up_bound = -5.12
     low_bound = 5.12
