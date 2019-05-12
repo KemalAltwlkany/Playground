@@ -3,3 +3,7 @@ raspored.py
 tabu_search.py
 testing.py
 playground.py
+*.xlsx
+data_export_test.py
+Expenses01.ods
+__pycache__

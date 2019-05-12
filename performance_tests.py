@@ -10,14 +10,14 @@ from T_bohachevsky import *
 #   3.) the tolerance value (5% of optimum offset)
 #   (optional) - the console print logs
 
-def add_results_to_table(worksheet, results, curr_row):
+def add_results_to_table(worksheet, dimensions, results, n_searches, curr_row):
     col = 0
-    for i in range(0, len(results[1])):
-        worksheet.write(curr_row + i, col, i+1)
-        worksheet.write(curr_row + i, col + 1, results[0])
-        worksheet.write(curr_row + i, col + 2, results[1][i - 1])
-        worksheet.write(curr_row + i, col + 3, results[1][i - 1] * 100 / results[0])
-    return curr_row + len(results[1]) + 1
+    for i in range(0, len(results)):
+        worksheet.write(curr_row + i, col, dimensions[i])
+        worksheet.write(curr_row + i, col + 1, n_searches)
+        worksheet.write(curr_row + i, col + 2, results[i])
+        worksheet.write(curr_row + i, col + 3, results[i] * 100 / n_searches)
+    return curr_row + len(results) + 1
 
 def add_header_to_table(worksheet, func_name, curr_row):
     curr_row += 4
@@ -56,11 +56,11 @@ def single_rastrigin(n):
     return [optimum.attribute.x, optimum.get_criteria()]
 
 def test_rastrigin_table(p, q):
-    max_dimensions = p
+    dimensions = p
     n_searches = q
     search_results = []
     print('******************************* RUNNING RASTRIGIN FUNCTION TESTS *************************************')
-    for n in range(1, max_dimensions+1):
+    for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
         n_optimums_found = 0
         for i in range(1, n_searches+1):
@@ -75,7 +75,7 @@ def test_rastrigin_table(p, q):
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
         search_results.append(n_optimums_found)
-    return [n_searches, search_results]
+    return search_results
 
 
 # test a single n-dimensional Schwefel function
@@ -86,18 +86,18 @@ def single_schwefel(n):
     SchwefelSpace.eps = 5
     playground_obj = Playground(200, 6, SchwefelSpace, 5000, 30, 0.0001, 0.0001, 200)
     start = time.time()
-    playground_obj.matchday_search(3)
+    playground_obj.matchday_search(5)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
     return [optimum.attribute.x, optimum.get_criteria()]
 
 def test_schwefel_table(p, q):
-    max_dimensions = p
+    dimensions = p
     n_searches = q
     search_results = []
     print('******************************* RUNNING SCHWEFEL FUNCTION TESTS *************************************')
-    for n in range(1, max_dimensions+1):
+    for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
         n_optimums_found = 0
         for i in range(1, n_searches+1):
@@ -112,15 +112,15 @@ def test_schwefel_table(p, q):
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
         search_results.append(n_optimums_found)
-    return [n_searches, search_results]
+    return search_results
 
 # test a single n-dimensional Griewangk function
 def single_griewank(n):
     GriewankSpace.n_dimensions = n
     GriewankSpace.up_bound = 600
     GriewankSpace.low_bound = -600
-    GriewankSpace.eps = 0.5
-    playground_obj = Playground(320, 15, GriewankSpace, 5000, 20, 0.0000001, 0.000000001, 350)
+    GriewankSpace.eps = 1
+    playground_obj = Playground(100, 8, GriewankSpace, 5000, 8, 0.0000001, 0.000000001, 350)
     start = time.time()
     playground_obj.matchday_search(3)
     end = time.time()
@@ -129,11 +129,11 @@ def single_griewank(n):
     return [optimum.attribute.x, optimum.get_criteria()]
 
 def test_griewank_table(p, q):
-    max_dimensions = p
+    dimensions = p
     n_searches = q
     search_results = []
     print('******************************* RUNNING GRIEWANK FUNCTION TESTS *************************************')
-    for n in range(1, max_dimensions+1):
+    for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
         n_optimums_found = 0
         for i in range(1, n_searches+1):
@@ -148,7 +148,7 @@ def test_griewank_table(p, q):
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
         search_results.append(n_optimums_found)
-    return [n_searches, search_results]
+    return search_results
 
 # NOTE - only defined for two variables!!
 def single_bohachevksy(n):
@@ -165,11 +165,11 @@ def single_bohachevksy(n):
     return [optimum.attribute.x, optimum.get_criteria()]
 
 def test_bohachevsky_table(p, q):
-    max_dimensions = p
+    dimensions = p
     n_searches = q
     search_results = []
     print('******************************* RUNNING BOHACHEVSKY FUNCTION TESTS *************************************')
-    for n in range(2, max_dimensions+1):
+    for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
         n_optimums_found = 0
         for i in range(1, n_searches+1):
@@ -184,10 +184,10 @@ def test_bohachevsky_table(p, q):
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
         search_results.append(n_optimums_found)
-    return [n_searches, search_results]
+    return search_results
 
 def main():
-    workbook = xlsxwriter.Workbook('performance_tests_new.xlsx')
+    workbook = xlsxwriter.Workbook('Schwefel_dim25__date12_05.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 0, 12)
     worksheet.set_column(1, 2, 10)
@@ -195,25 +195,26 @@ def main():
     curr_row = 0
 
     # Rastrigin
-    results = test_rastrigin_table(30, 30)
-    curr_row = add_header_to_table(worksheet, 'Rastrigin', curr_row)
-    curr_row = add_results_to_table(worksheet, results, curr_row)
+    dimensions = [25]
+    n_searches = 50
+    #results = test_rastrigin_table(dimensions, n_searches)
+    #curr_row = add_header_to_table(worksheet, 'Rastrigin', curr_row)
+    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
     # Schwefel
-    results = test_schwefel_table(30, 30)
+    results = test_schwefel_table(dimensions, n_searches)
     curr_row = add_header_to_table(worksheet, 'Schwefel', curr_row)
-    curr_row = add_results_to_table(worksheet, results, curr_row)
+    curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
     # Griewangk
-    results = test_griewank_table(10, 30)
-    curr_row = add_header_to_table(worksheet, 'Griewank', curr_row)
-    curr_row = add_results_to_table(worksheet, results, curr_row)
+    #results = test_griewank_table(dimensions, n_searches)
+    #curr_row = add_header_to_table(worksheet, 'Griewank', curr_row)
+    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
-    # Bohachevsky
-    results = test_bohachevsky_table(2, 50)
-    curr_row = add_header_to_table(worksheet, 'Bohachevsky', curr_row)
-    curr_row = add_results_to_table(worksheet, results, curr_row)
-
+    # Bohachevsky - only valid dimension is 2!
+    #results = test_bohachevsky_table([2], n_searches)
+    #curr_row = add_header_to_table(worksheet, 'Bohachevsky', curr_row)
+    #curr_row = add_results_to_table(worksheet, [2], results, n_searches, curr_row)
 
     workbook.close()
 
