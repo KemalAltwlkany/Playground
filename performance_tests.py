@@ -10,6 +10,8 @@ from T_ackley1 import *
 from T_alpine2 import *
 from T_bohachevsky3 import *
 from T_schwefel4 import *
+from T_shekel5 import *
+from T_paviani import *
 
 #   NOTE
 #   three changes need to be made for test_function_table
@@ -448,16 +450,89 @@ def test_schwefel4_table(p, q):
         search_results.append(n_optimums_found)
     return search_results
 
+# test a single n-dimensional Shekel 5 function
+def single_shekel5(n):
+    Shekel5Space.n_dimensions = n
+    Shekel5Space.up_bound = 10
+    Shekel5Space.low_bound = 0
+    Shekel5Space.eps = 0.01
+    playground_obj = Playground(200, 6, Shekel5Space, 5000, 30, 0.0001, 0.0001, 200)
+    start = time.time()
+    playground_obj.matchday_search(5)
+    end = time.time()
+    print("The matchday algorithm ran for, t = ", end - start)
+    optimum = copy.deepcopy(playground_obj.get_optimum())
+    return [optimum.attribute.x, optimum.get_criteria()]
+
+def test_shekel5_table(p, q):
+    dimensions = p
+    n_searches = q
+    search_results = []
+    print('******************************* RUNNING SHEKEL 5 FUNCTION TESTS *************************************')
+    for n in dimensions:
+        print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
+        n_optimums_found = 0
+        for i in range(1, n_searches+1):
+            print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
+            optimum = single_shekel5(n)
+            real_optimum = [4 for k in range(n)]
+            if validate_optimum(optimum[0], real_optimum, 0.2):
+                print('The real optimum has been found!')
+                n_optimums_found += 1
+            else:
+                print('This is not the real optimum!')
+            print('-------------------------------------------------------------------------------------------')
+        print('***************************************************************************************************')
+        search_results.append(n_optimums_found)
+    return search_results
+
+# test a single n-dimensional Shekel 5 function
+def single_paviani(n):
+    PavianiSpace.n_dimensions = n
+    PavianiSpace.up_bound = 9.999
+    PavianiSpace.low_bound = 2.001
+    PavianiSpace.eps = 0.01
+    playground_obj = Playground(200, 6, PavianiSpace, 5000, 30, 0.0001, 0.0001, 200)
+    start = time.time()
+    playground_obj.matchday_search(5)
+    end = time.time()
+    print("The matchday algorithm ran for, t = ", end - start)
+    optimum = copy.deepcopy(playground_obj.get_optimum())
+    return [optimum.attribute.x, optimum.get_criteria()]
+
+def test_paviani_table(p, q):
+    dimensions = p
+    n_searches = q
+    search_results = []
+    print('******************************* RUNNING PAVIANI FUNCTION TESTS *************************************')
+    for n in dimensions:
+        print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
+        n_optimums_found = 0
+        for i in range(1, n_searches+1):
+            print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
+            optimum = single_paviani(n)
+            real_optimum = [9.350266 for k in range(n)]
+            if validate_optimum(optimum[0], real_optimum, 0.4675):
+                print('The real optimum has been found!')
+                n_optimums_found += 1
+            else:
+                print('This is not the real optimum!')
+            print('-------------------------------------------------------------------------------------------')
+        print('***************************************************************************************************')
+        search_results.append(n_optimums_found)
+    return search_results
+
+
 def main():
-    workbook = xlsxwriter.Workbook('schwefel4_27_05.xlsx')
+    workbook = xlsxwriter.Workbook('shekel5_27_05.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 0, 12)
     worksheet.set_column(1, 2, 10)
     worksheet.set_column(3, 3, 13)
     curr_row = 0
 
-    dimensions = [7, 8]
-    n_searches = 2
+    dimensions = [10]
+    n_searches = 3
 
     # Rastrigin
     #results = test_rastrigin_table(dimensions, n_searches)
@@ -510,8 +585,18 @@ def main():
     #curr_row = add_results_to_table(worksheet, [2], results, n_searches, curr_row)
 
     # Schwefel 4 - needs at least 2 dimensions!
-    results = test_schwefel4_table(dimensions, n_searches)
-    curr_row = add_header_to_table(worksheet, 'Schwefel', curr_row)
+    #results = test_schwefel4_table(dimensions, n_searches)
+    #curr_row = add_header_to_table(worksheet, 'Schwefel 4', curr_row)
+    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
+
+    # Shekel 5 - only valid dimension is 4!
+    #results = test_shekel5_table(dimensions, n_searches)
+    #curr_row = add_header_to_table(worksheet, 'Shekel 5', curr_row)
+    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
+
+    # Paviani
+    results = test_paviani_table(dimensions, n_searches)
+    curr_row = add_header_to_table(worksheet, 'Paviani', curr_row)
     curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
     workbook.close()
