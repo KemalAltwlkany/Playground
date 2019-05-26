@@ -6,8 +6,8 @@ import math as math
 class SchafferF6Space:
     eps = 1
     n_dimensions = 2
-    up_bound = -100
-    low_bound = 100
+    up_bound = 100
+    low_bound = -100
 
     def __init__(self):
         self.x = []

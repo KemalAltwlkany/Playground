@@ -6,8 +6,8 @@ import math as math
 class SchwefelSpace:
     eps = 5
     n_dimensions = 10
-    up_bound = -500
-    low_bound = 500
+    up_bound = 500
+    low_bound = -500
 
     def __init__(self):
         self.x = []

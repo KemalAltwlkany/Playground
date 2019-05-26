@@ -6,8 +6,8 @@ import math as math
 class SchafferF7Space:
     eps = 1
     n_dimensions = 5
-    up_bound = -100
-    low_bound = 100
+    up_bound = 100
+    low_bound = -100
 
     def __init__(self):
         self.x = []
@@ -31,7 +31,7 @@ class SchafferF7Space:
         new_x = []
         for i in range(SchafferF7Space.n_dimensions):
             p = random.uniform(0, 1)
-            if p < 0.2:
+            if p < 0.05:
                 new_x.append(random.uniform(SchafferF7Space.low_bound, SchafferF7Space.up_bound))
             else:
                 new_x.append(self.x[i] + random.uniform(-SchafferF7Space.eps, SchafferF7Space.eps))

@@ -2,12 +2,12 @@ from basic_playground import *
 import math as math
 
 #   global minimum is obtainable for xi=0, f(x)=0
-#   search space is limited to [-600, 600]
+#   search space is limited to [-100, 100]
 class GriewankSpace:
     eps = 1
     n_dimensions = 10
-    up_bound = -600
-    low_bound = 600
+    up_bound = 100
+    low_bound = -100
 
     def __init__(self):
         self.x = []
