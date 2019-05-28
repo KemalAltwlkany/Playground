@@ -9,6 +9,7 @@ from T_bohachevsky import *
 from T_griewank import *
 from T_ackley1 import *
 from T_alpine2 import *
+from T_paviani import *
 
 #this test validates whether the value of the minima is computed exactly
 class TestMinima(unittest.TestCase):
@@ -109,3 +110,14 @@ class TestMinima(unittest.TestCase):
             # print(math.fabs(obj.compute_value() + 2.8081311800070053291 ** i))
             self.assertEqual(math.fabs(obj.compute_value() + 2.8081311800070053291 ** i) < 1e-6, True)
 
+    def test_paviani(self):
+        PavianiSpace.eps = 0.01
+        PavianiSpace.up_bound = 9.999
+        PavianiSpace.low_bound = 2.001
+        for i in range(1, 20):
+            PavianiSpace.n_dimensions = i
+            obj = PavianiSpace()
+            pom = [9.350266 for j in range(0, i)]
+            obj.set_solution(pom)
+            print(math.fabs(obj.compute_value()))
+            self.assertEqual(math.fabs(obj.compute_value() - 45.7784684040686) < 1e-2, True)
