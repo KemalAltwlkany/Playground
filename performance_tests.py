@@ -24,30 +24,48 @@ def table_header(workbook, worksheet, func_name, curr_row):
     worksheet.write(curr_row, 0, func_name, workbook.add_format({'bold': True}))
     return curr_row + 2
 
-def add_search_to_table(workbook, worksheet, dimension, curr_row, results, optimum, search_space):
+def add_search_to_table(workbook, worksheet, dimension, curr_row, results, optimum, search_space, tolerance=2):
     opt_crit = optimum.get_value()
-    worksheet.write(curr_row, 0, 'N dimensions == ' + str(dimension), workbook.add_format({'bold': True}))
+    bold = workbook.add_format({'bold': True})
+    worksheet.write(curr_row, 0, 'N dimensions == ' + str(dimension), bold)
     curr_row += 1
-    worksheet.write(curr_row, 0, 'Criteria of optimum == ' + str(opt_crit), workbook.add_format({'bold': True}))
-    worksheet.write(curr_row + 1, 0, 'Search number:', workbook.add_format({'bold': True}))
-    worksheet.write(curr_row + 1, 1, 'Distance from optimum', workbook.add_format({'bold': True}))
-    worksheet.write(curr_row + 1, 2, 'Distance in % of search space', workbook.add_format({'bold': True}))
-    worksheet.write(curr_row + 1, 3, 'Criteria', workbook.add_format({'bold': True}))
-    worksheet.write(curr_row + 1, 4, 'Criteria in % of optimum criteria', workbook.add_format({'bold': True}))
-    worksheet.write(curr_row + 1, 5, 'Runtime [s]', workbook.add_format({'bold': True}))
+    worksheet.write(curr_row, 0, 'Criteria of optimum == ' + str(opt_crit), bold)
+    worksheet.write(curr_row + 1, 0, 'Search number:', bold)
+    worksheet.write(curr_row + 1, 1, 'Distance from optimum', bold)
+    worksheet.write(curr_row + 1, 2, 'Distance in % of search space', bold)
+    worksheet.write(curr_row + 1, 3, 'Criteria', bold)
+    worksheet.write(curr_row + 1, 4, 'Criteria in % of optimum criteria', bold)
+    worksheet.write(curr_row + 1, 5, 'Runtime [s]', bold)
     curr_row += 2
+    n_corr = 0  # number of correct optimums considering both criteria and optimum distance (%)
+    n_sp = 0    # number of correct searches relative to optimum distance (%)
+    n_crit = 0  # number of correct searches relative to criteria (%)
     for i in range(len(results)):
         distance = results[i][0].attribute.measure_difference(optimum)
         criteria = results[i][0].get_criteria()
-        worksheet.write(curr_row, 0, i+1, workbook.add_format({'bold': True}))
-        worksheet.write(curr_row, 1, distance)
-        worksheet.write(curr_row, 2, distance/search_space)
-        worksheet.write(curr_row, 3, criteria)
+        dist_perc = distance*100/search_space  # distance in % of problem space
         # CAREFUL FOR DIVISION BY ZERO IN CASE OF OPTIMAL CRITERIA = 0
-        worksheet.write(curr_row, 4, math.fabs(criteria) - math.fabs(opt_crit))
+        crit_perc = math.fabs(criteria)*100 # % of criteria
+        worksheet.write(curr_row, 0, i+1, bold)
+        worksheet.write(curr_row, 1, distance)
+        worksheet.write(curr_row, 2, dist_perc)
+        worksheet.write(curr_row, 3, criteria)
+        worksheet.write(curr_row, 4, crit_perc)
         worksheet.write(curr_row, 5, results[i][1])
         curr_row += 1
-    return curr_row + 1
+        if dist_perc - tolerance < 0:
+            n_corr += 1
+            n_sp += 1
+        if crit_perc - tolerance < 0:
+            n_corr += 1
+            n_crit += 1
+    worksheet.write(curr_row + 0, 0, 'Total optimums found == ' + str(n_corr), bold)
+    worksheet.write(curr_row + 1, 0, 'In (%) == ' + str(n_corr*50/len(results)), bold)
+    worksheet.write(curr_row + 2, 0, 'Total optimums (space) == ' + str(n_sp), bold)
+    worksheet.write(curr_row + 3, 0, 'In (%) == ' + str(n_sp*100/len(results)), bold)
+    worksheet.write(curr_row + 4, 0, 'Total optimums (criteria) == ' + str(n_crit), bold)
+    worksheet.write(curr_row + 5, 0, 'In (%) == ' + str(n_crit * 100 / len(results)), bold)
+    return curr_row + 8
 
 def add_results_to_table(worksheet, dimensions, results, n_searches, curr_row):
     col = 0
@@ -80,44 +98,46 @@ def validate_optimum(x, y, tolerance):
                 return False
         return True
 
-# test a single n-dimensional Rastrigin function
+# test a single n-dimensional Rastrigin function, REWORKED
 def single_rastrigin(n):
     RastriginSpace.n_dimensions = n
-    RastriginSpace.up_bound = 5.12
-    RastriginSpace.low_bound = -5.12
-    RastriginSpace.eps = 0.001
-    playground_obj = Playground(200, 6, RastriginSpace, 5000, 30, 0.00000001, 0.00000001, 200)
+    playground_obj = Playground(200, 6, RastriginSpace, 5000, 30, 0.0001, 0.0001, 200)
     start = time.time()
-    playground_obj.matchday_search(3)
+    playground_obj.matchday_search(5)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
+    return [optimum, end - start]
 
-def test_rastrigin_table(p, q):
+# REWORKED
+def test_rastrigin_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
-    search_results = []
     print('******************************* RUNNING RASTRIGIN FUNCTION TESTS *************************************')
+    RastriginSpace.up_bound = 5.12
+    RastriginSpace.low_bound = -5.12
+    RastriginSpace.eps = 0.001
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
-        for i in range(1, n_searches+1):
+        iteration_results = []
+        raw_optimum = [0 for k in range(n)]
+        for i in range(1, n_searches + 1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_rastrigin(n)
-            real_optimum = [0 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.05):
+            result = single_rastrigin(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.05):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = RastriginSpace()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 10.24)
+    return curr_row
 
 
-# test a single n-dimensional Schwefel function
+# test a single n-dimensional Schwefel function, REWORKED
 def single_schwefel(n):
     SchwefelSpace.n_dimensions = n
     playground_obj = Playground(200, 6, SchwefelSpace, 5000, 30, 0.0001, 0.0001, 200)
@@ -128,6 +148,7 @@ def single_schwefel(n):
     optimum = copy.deepcopy(playground_obj.get_optimum())
     return [optimum, end-start]
 
+#   REWORKED
 def test_schwefel_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
@@ -555,27 +576,26 @@ def test_paviani_table(p, q):
 
 def main():
 
-    workbook = xlsxwriter.Workbook('provjera.xlsx')
+    workbook = xlsxwriter.Workbook('new_rastrigin_1_5.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 6, 25)
     curr_row = 0
 
-    dimensions = [1, 2, 3]
-    n_searches = 3
-
-    # Rastrigin
-    #results = test_rastrigin_table(dimensions, n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Rastrigin', curr_row)
-    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
+    dimensions = [1, 2, 3, 4, 5]
+    n_searches = 50
 
     # Schwefel
-    curr_row = table_header(workbook, worksheet, 'Schwefel', curr_row)
-    curr_row = test_schwefel_table(dimensions, n_searches, workbook, worksheet, curr_row)
+    # curr_row = table_header(workbook, worksheet, 'Schwefel', curr_row)
+    # curr_row = test_schwefel_table(dimensions, n_searches, workbook, worksheet, curr_row)
+
+    # Rastrigin
+    curr_row = table_header(workbook, worksheet, 'Rastrigin', curr_row)
+    curr_row = test_rastrigin_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
     # Griewangk
-    #results = test_griewank_table(dimensions, n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Griewank', curr_row)
-    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
+    # results = test_griewank_table(dimensions, n_searches)
+    # curr_row = add_header_to_table(worksheet, 'Griewank', curr_row)
+    # curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
     # Bohachevsky - only valid dimension is 2!
     #results = test_bohachevsky_table([2], n_searches)
