@@ -20,6 +20,35 @@ from T_paviani import *
 #   3.) the tolerance value (5% of optimum offset)
 #   (optional) - the console print logs
 
+def table_header(workbook, worksheet, func_name, curr_row):
+    worksheet.write(curr_row, 0, func_name, workbook.add_format({'bold': True}))
+    return curr_row + 2
+
+def add_search_to_table(workbook, worksheet, dimension, curr_row, results, optimum, search_space):
+    opt_crit = optimum.get_value()
+    worksheet.write(curr_row, 0, 'N dimensions == ' + str(dimension), workbook.add_format({'bold': True}))
+    curr_row += 1
+    worksheet.write(curr_row, 0, 'Criteria of optimum == ' + str(opt_crit), workbook.add_format({'bold': True}))
+    worksheet.write(curr_row + 1, 0, 'Search number:', workbook.add_format({'bold': True}))
+    worksheet.write(curr_row + 1, 1, 'Distance from optimum', workbook.add_format({'bold': True}))
+    worksheet.write(curr_row + 1, 2, 'Distance in % of search space', workbook.add_format({'bold': True}))
+    worksheet.write(curr_row + 1, 3, 'Criteria', workbook.add_format({'bold': True}))
+    worksheet.write(curr_row + 1, 4, 'Criteria in % of optimum criteria', workbook.add_format({'bold': True}))
+    worksheet.write(curr_row + 1, 5, 'Runtime [s]', workbook.add_format({'bold': True}))
+    curr_row += 2
+    for i in range(len(results)):
+        distance = results[i][0].attribute.measure_difference(optimum)
+        criteria = results[i][0].get_criteria()
+        worksheet.write(curr_row, 0, i+1, workbook.add_format({'bold': True}))
+        worksheet.write(curr_row, 1, distance)
+        worksheet.write(curr_row, 2, distance/search_space)
+        worksheet.write(curr_row, 3, criteria)
+        # CAREFUL FOR DIVISION BY ZERO IN CASE OF OPTIMAL CRITERIA = 0
+        worksheet.write(curr_row, 4, math.fabs(criteria) - math.fabs(opt_crit))
+        worksheet.write(curr_row, 5, results[i][1])
+        curr_row += 1
+    return curr_row + 1
+
 def add_results_to_table(worksheet, dimensions, results, n_searches, curr_row):
     col = 0
     for i in range(0, len(results)):
@@ -91,46 +120,47 @@ def test_rastrigin_table(p, q):
 # test a single n-dimensional Schwefel function
 def single_schwefel(n):
     SchwefelSpace.n_dimensions = n
-    SchwefelSpace.up_bound = 500
-    SchwefelSpace.low_bound = -500
-    SchwefelSpace.eps = 5
     playground_obj = Playground(200, 6, SchwefelSpace, 5000, 30, 0.0001, 0.0001, 200)
     start = time.time()
     playground_obj.matchday_search(5)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
+    return [optimum, end-start]
 
-def test_schwefel_table(p, q):
+def test_schwefel_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
-    search_results = []
     print('******************************* RUNNING SCHWEFEL FUNCTION TESTS *************************************')
+    SchwefelSpace.up_bound = 500
+    SchwefelSpace.low_bound = -500
+    SchwefelSpace.eps = 5
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [420.9687 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_schwefel(n)
-            real_optimum = [420.9687 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 21.04844):
+            result = single_schwefel(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 21.04844):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = SchwefelSpace()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 1000)
+    return curr_row
 
 # test a single n-dimensional Griewangk function
 def single_griewank(n):
     GriewankSpace.n_dimensions = n
     GriewankSpace.up_bound = 100
     GriewankSpace.low_bound = -100
-    GriewankSpace.eps = 0.001
-    playground_obj = Playground(191, 19, GriewankSpace, 5000, 10, 0.0000001, 0.000000001, 350)
+    GriewankSpace.eps = 0.1
+    playground_obj = Playground(181, 6, GriewankSpace, 5000, 30, 0.0000001, 0.000000001, 350)
     start = time.time()
     playground_obj.matchday_search(3)
     end = time.time()
@@ -309,8 +339,8 @@ def single_ackley1(n):
     Ackley1Space.n_dimensions = n
     Ackley1Space.up_bound = 35
     Ackley1Space.low_bound = -35
-    Ackley1Space.eps = 0.001
-    playground_obj = Playground(1000, 20, Ackley1Space, 5000, 49, 0.00000001, 0.00000001, 150)
+    Ackley1Space.eps = 0.005
+    playground_obj = Playground(200, 6, Ackley1Space, 5000, 30, 0.00000001, 0.00000001, 150)
     start = time.time()
     playground_obj.matchday_search(3)
     end = time.time()
@@ -524,14 +554,13 @@ def test_paviani_table(p, q):
 
 
 def main():
-    workbook = xlsxwriter.Workbook('shekel5_27_05.xlsx')
+
+    workbook = xlsxwriter.Workbook('provjera.xlsx')
     worksheet = workbook.add_worksheet()
-    worksheet.set_column(0, 0, 12)
-    worksheet.set_column(1, 2, 10)
-    worksheet.set_column(3, 3, 13)
+    worksheet.set_column(0, 6, 25)
     curr_row = 0
 
-    dimensions = [10]
+    dimensions = [1, 2, 3]
     n_searches = 3
 
     # Rastrigin
@@ -540,9 +569,8 @@ def main():
     #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
     # Schwefel
-    #results = test_schwefel_table(dimensions, n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Schwefel', curr_row)
-    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
+    curr_row = table_header(workbook, worksheet, 'Schwefel', curr_row)
+    curr_row = test_schwefel_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
     # Griewangk
     #results = test_griewank_table(dimensions, n_searches)
@@ -594,10 +622,10 @@ def main():
     #curr_row = add_header_to_table(worksheet, 'Shekel 5', curr_row)
     #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
-    # Paviani
-    results = test_paviani_table(dimensions, n_searches)
-    curr_row = add_header_to_table(worksheet, 'Paviani', curr_row)
-    curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
+    # Paviani - 10 dimensional problem
+    #results = test_paviani_table(dimensions, n_searches)
+    #curr_row = add_header_to_table(worksheet, 'Paviani', curr_row)
+    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
     workbook.close()
 
