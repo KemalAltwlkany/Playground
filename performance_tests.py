@@ -43,9 +43,9 @@ def add_search_to_table(workbook, worksheet, dimension, curr_row, results, optim
     for i in range(len(results)):
         distance = results[i][0].attribute.measure_difference(optimum)
         criteria = results[i][0].get_criteria()
-        dist_perc = distance*100/search_space  # distance in % of problem space
+        dist_perc = distance*100/(search_space*dimension)  # distance in % of problem space
         # CAREFUL FOR DIVISION BY ZERO IN CASE OF OPTIMAL CRITERIA = 0
-        crit_perc = math.fabs(criteria)*100 # % of criteria
+        crit_perc = 100 * math.fabs((criteria - optimum.get_value()) / optimum.get_value())  # % of criteria
         worksheet.write(curr_row, 0, i+1, bold)
         worksheet.write(curr_row, 1, distance)
         worksheet.write(curr_row, 2, dist_perc)
@@ -54,13 +54,13 @@ def add_search_to_table(workbook, worksheet, dimension, curr_row, results, optim
         worksheet.write(curr_row, 5, results[i][1])
         curr_row += 1
         if dist_perc - tolerance < 0:
-            n_corr += 1
             n_sp += 1
         if crit_perc - tolerance < 0:
-            n_corr += 1
             n_crit += 1
+        if (crit_perc - tolerance < 0) or (dist_perc - tolerance < 0):
+            n_corr += 1
     worksheet.write(curr_row + 0, 0, 'Total optimums found == ' + str(n_corr), bold)
-    worksheet.write(curr_row + 1, 0, 'In (%) == ' + str(n_corr*50/len(results)), bold)
+    worksheet.write(curr_row + 1, 0, 'In (%) == ' + str(n_corr*100/len(results)), bold)
     worksheet.write(curr_row + 2, 0, 'Total optimums (space) == ' + str(n_sp), bold)
     worksheet.write(curr_row + 3, 0, 'In (%) == ' + str(n_sp*100/len(results)), bold)
     worksheet.write(curr_row + 4, 0, 'Total optimums (criteria) == ' + str(n_crit), bold)
@@ -101,9 +101,9 @@ def validate_optimum(x, y, tolerance):
 # test a single n-dimensional Rastrigin function, REWORKED
 def single_rastrigin(n):
     RastriginSpace.n_dimensions = n
-    playground_obj = Playground(200, 6, RastriginSpace, 5000, 30, 0.0001, 0.0001, 200)
+    playground_obj = Playground(400, 9, RastriginSpace, 5000, 35, 0.0001, 0.0001, 200)
     start = time.time()
-    playground_obj.matchday_search(5)
+    playground_obj.matchday_search(3)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
@@ -142,7 +142,7 @@ def single_schwefel(n):
     SchwefelSpace.n_dimensions = n
     playground_obj = Playground(200, 6, SchwefelSpace, 5000, 30, 0.0001, 0.0001, 200)
     start = time.time()
-    playground_obj.matchday_search(5)
+    playground_obj.matchday_search(3)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
@@ -576,21 +576,21 @@ def test_paviani_table(p, q):
 
 def main():
 
-    workbook = xlsxwriter.Workbook('new_rastrigin_1_5.xlsx')
+    workbook = xlsxwriter.Workbook('new__28_30.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 6, 25)
     curr_row = 0
 
-    dimensions = [1, 2, 3, 4, 5]
+    dimensions = [28, 29, 30]
     n_searches = 50
 
-    # Schwefel
-    # curr_row = table_header(workbook, worksheet, 'Schwefel', curr_row)
-    # curr_row = test_schwefel_table(dimensions, n_searches, workbook, worksheet, curr_row)
+    # Schwefel, reworked
+    curr_row = table_header(workbook, worksheet, 'Schwefel', curr_row)
+    curr_row = test_schwefel_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
-    # Rastrigin
-    curr_row = table_header(workbook, worksheet, 'Rastrigin', curr_row)
-    curr_row = test_rastrigin_table(dimensions, n_searches, workbook, worksheet, curr_row)
+    # Rastrigin, reworked
+    #curr_row = table_header(workbook, worksheet, 'Rastrigin', curr_row)
+    #curr_row = test_rastrigin_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
     # Griewangk
     # results = test_griewank_table(dimensions, n_searches)
