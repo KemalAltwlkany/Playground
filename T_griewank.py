@@ -6,8 +6,8 @@ import math as math
 class GriewankSpace:
     eps = 1
     n_dimensions = 10
-    up_bound = 100
-    low_bound = -100
+    up_bound = 600
+    low_bound = -600
 
     def __init__(self):
         self.x = []

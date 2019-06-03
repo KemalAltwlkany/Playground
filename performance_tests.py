@@ -175,77 +175,81 @@ def test_schwefel_table(p, q, workbook, worksheet, curr_row):
         curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 1000)
     return curr_row
 
-# test a single n-dimensional Griewangk function
+# test a single n-dimensional Griewank function, REWORKED
 def single_griewank(n):
     GriewankSpace.n_dimensions = n
-    GriewankSpace.up_bound = 100
-    GriewankSpace.low_bound = -100
-    GriewankSpace.eps = 0.1
-    playground_obj = Playground(181, 6, GriewankSpace, 5000, 30, 0.0000001, 0.000000001, 350)
+    playground_obj = Playground(700, 12, GriewankSpace, 5000, 50, 0.0001, 0.0001, 200)
     start = time.time()
     playground_obj.matchday_search(3)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
+    return [optimum, end-start]
 
-def test_griewank_table(p, q):
+#   REWORKED
+def test_griewank_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
-    search_results = []
     print('******************************* RUNNING GRIEWANK FUNCTION TESTS *************************************')
+    GriewankSpace.up_bound = 600
+    GriewankSpace.low_bound = -600
+    GriewankSpace.eps = 0.05
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [0 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_griewank(n)
-            real_optimum = [0 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.1):
+            result = single_griewank(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.02):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = GriewankSpace()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 1200)
+    return curr_row
 
-# NOTE - only defined for two variables!!
+# test a single 2-D Bohachevsky F1 function, REWORKED
 def single_bohachevksy(n):
     BohachevskySpace.n_dimensions = n
+    playground_obj = Playground(200, 6, BohachevskySpace, 5000, 30, 0.0001, 0.0001, 200)
+    start = time.time()
+    playground_obj.matchday_search(3)
+    end = time.time()
+    print("The matchday algorithm ran for, t = ", end - start)
+    optimum = copy.deepcopy(playground_obj.get_optimum())
+    return [optimum, end-start]
+
+#   REWORKED
+def test_bohachevksy_table(p, q, workbook, worksheet, curr_row):
+    dimensions = p
+    n_searches = q
+    print('******************************* RUNNING BOHACHEVSKY F1 FUNCTION TESTS *************************************')
     BohachevskySpace.up_bound = 100
     BohachevskySpace.low_bound = -100
     BohachevskySpace.eps = 0.1
-    playground_obj = Playground(200, 6, BohachevskySpace, 5000, 30, 0.0000001, 0.000000001, 350)
-    start = time.time()
-    playground_obj.matchday_search(3)
-    end = time.time()
-    print("The matchday algorithm ran for, t = ", end - start)
-    optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
-
-def test_bohachevsky_table(p, q):
-    dimensions = p
-    n_searches = q
-    search_results = []
-    print('******************************* RUNNING BOHACHEVSKY FUNCTION TESTS *************************************')
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [0 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_bohachevksy(n)
-            real_optimum = [0 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.05):
+            result = single_bohachevksy(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.02):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = BohachevskySpace()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 200)
+    return curr_row
 
 # test a single 2D Schaffer F6 function, REWORKED
 def single_schafferF6(n):
@@ -285,40 +289,44 @@ def test_schafferF6_table(p, q, workbook, worksheet, curr_row):
         curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 200)
     return curr_row
 
+
+# test a single n dimensional Schaffer F7 function, REWORKED
 def single_schafferF7(n):
     SchafferF7Space.n_dimensions = n
-    SchafferF7Space.up_bound = 100
-    SchafferF7Space.low_bound = -100
-    SchafferF7Space.eps = 0.001
-    playground_obj = Playground(1000, 14, SchafferF7Space, 5000, 68, 0.1e-10, 0.1e-25, 500)
+    playground_obj = Playground(700, 12, SchafferF7Space, 5000, 50, 0.00001, 0.00001, 300)
     start = time.time()
-    playground_obj.matchday_search(3)
+    playground_obj.matchday_search(5)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
+    return [optimum, end-start]
 
-def test_schafferF7_table(p, q):
+#   REWORKED
+def test_schafferF7_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
-    search_results = []
     print('******************************* RUNNING SCHAFFER F7 FUNCTION TESTS *************************************')
+    SchafferF7Space.up_bound = 100
+    SchafferF7Space.low_bound = -100
+    SchafferF7Space.eps = 1
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [0 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_schafferF7(n)
-            real_optimum = [0 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.1):
+            result = single_schafferF7(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.05):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = SchafferF7Space()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 200)
+    return curr_row
 
 # test a single n-dimensional Rosenbrock function
 def single_rosenbrock(n):
@@ -355,7 +363,6 @@ def test_rosenbrock_table(p, q):
         print('***************************************************************************************************')
         search_results.append(n_optimums_found)
     return search_results
-
 
 # test a single n-dimensional Ackley function
 def single_ackley1(n):
@@ -430,114 +437,119 @@ def test_alpine2_table(p, q):
         search_results.append(n_optimums_found)
     return search_results
 
-# NOTE - only defined for two variables!!
+# test a single 2-D Bohachevsky F3 function, REWORKED
 def single_bohachevksy3(n):
     BohachevskySpace3.n_dimensions = n
-    BohachevskySpace3.up_bound = 100
-    BohachevskySpace3.low_bound = -100
-    BohachevskySpace3.eps = 0.1
-    playground_obj = Playground(200, 6, BohachevskySpace3, 5000, 30, 0.0000001, 0.000000001, 350)
+    playground_obj = Playground(200, 6, BohachevskySpace3, 5000, 30, 0.0001, 0.0001, 200)
     start = time.time()
     playground_obj.matchday_search(3)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
+    return [optimum, end-start]
 
-def test_bohachevsky3_table(p, q):
+#   REWORKED
+def test_bohachevksy3_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
-    search_results = []
-    print('******************************* RUNNING BOHACHEVSKY 3 FUNCTION TESTS *************************************')
+    print('******************************* RUNNING BOHACHEVSKY F3 FUNCTION TESTS *************************************')
+    BohachevskySpace3.up_bound = 100
+    BohachevskySpace3.low_bound = -100
+    BohachevskySpace3.eps = 0.1
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [0 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_bohachevksy3(n)
-            real_optimum = [0 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.05):
+            result = single_bohachevksy3(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.02):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = BohachevskySpace3()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 200)
+    return curr_row
 
-# schwefel 4
-# test a single n-dimensional Schwefel 4 function
+# test a single n-dimensional Schwefel4 function, REWORKED
 def single_schwefel4(n):
     Schwefel4Space.n_dimensions = n
+    playground_obj = Playground(200, 6, Schwefel4Space, 5000, 30, 0.0001, 0.0001, 200)
+    start = time.time()
+    playground_obj.matchday_search(3)
+    end = time.time()
+    print("The matchday algorithm ran for, t = ", end - start)
+    optimum = copy.deepcopy(playground_obj.get_optimum())
+    return [optimum, end-start]
+
+#   REWORKED
+def test_schwefel4_table(p, q, workbook, worksheet, curr_row):
+    dimensions = p
+    n_searches = q
+    print('******************************* RUNNING SCHWEFEL 4 FUNCTION TESTS *************************************')
     Schwefel4Space.up_bound = 10
     Schwefel4Space.low_bound = 0
     Schwefel4Space.eps = 0.01
-    playground_obj = Playground(200, 6, Schwefel4Space, 5000, 30, 0.0001, 0.0001, 200)
-    start = time.time()
-    playground_obj.matchday_search(5)
-    end = time.time()
-    print("The matchday algorithm ran for, t = ", end - start)
-    optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
-
-def test_schwefel4_table(p, q):
-    dimensions = p
-    n_searches = q
-    search_results = []
-    print('******************************* RUNNING SCHWEFEL 4 FUNCTION TESTS *************************************')
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [1 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_schwefel4(n)
-            real_optimum = [1 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.05):
+            result = single_schwefel4(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.02):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = Schwefel4Space()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 10)
+    return curr_row
 
-# test a single n-dimensional Shekel 5 function
+# test a single 4D Shekel5 function, REWORKED
 def single_shekel5(n):
     Shekel5Space.n_dimensions = n
+    playground_obj = Playground(700, 12, Shekel5Space, 5000, 50, 0.00001, 0.00001, 300)
+    start = time.time()
+    playground_obj.matchday_search(2)
+    end = time.time()
+    print("The matchday algorithm ran for, t = ", end - start)
+    optimum = copy.deepcopy(playground_obj.get_optimum())
+    return [optimum, end-start]
+
+#   REWORKED
+def test_shekel5_table(p, q, workbook, worksheet, curr_row):
+    dimensions = p
+    n_searches = q
+    print('******************************* RUNNING SHEKEL 5 FUNCTION TESTS *************************************')
     Shekel5Space.up_bound = 10
     Shekel5Space.low_bound = 0
     Shekel5Space.eps = 0.01
-    playground_obj = Playground(200, 6, Shekel5Space, 5000, 30, 0.0001, 0.0001, 200)
-    start = time.time()
-    playground_obj.matchday_search(5)
-    end = time.time()
-    print("The matchday algorithm ran for, t = ", end - start)
-    optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
-
-def test_shekel5_table(p, q):
-    dimensions = p
-    n_searches = q
-    search_results = []
-    print('******************************* RUNNING SHEKEL 5 FUNCTION TESTS *************************************')
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [4 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_shekel5(n)
-            real_optimum = [4 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.2):
+            result = single_shekel5(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.1):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = Shekel5Space()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 200)
+    return curr_row
 
 # test a single n-dimensional Shekel 5 function
 def single_paviani(n):
@@ -578,40 +590,53 @@ def test_paviani_table(p, q):
 
 def main():
 
-    workbook = xlsxwriter.Workbook('new_schaffer_F6.xlsx')
+    workbook = xlsxwriter.Workbook('new_schwefel4_11_15.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 6, 25)
     curr_row = 0
 
-    dimensions = [2]
-    n_searches = 5
+    dimensions = [16]
+    n_searches = 50
 
-    # Schwefel, reworked
+    # Schwefel, reworked, done testing
     #curr_row = table_header(workbook, worksheet, 'Schwefel', curr_row)
     #curr_row = test_schwefel_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
-    # Rastrigin, reworked
+    # Rastrigin, reworked, done testing
     #curr_row = table_header(workbook, worksheet, 'Rastrigin', curr_row)
     #curr_row = test_rastrigin_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
-    # Schaffer F6, only defined for 2D, reworked
-    curr_row = table_header(workbook, worksheet, 'Schaffer F6', curr_row)
-    curr_row = test_schafferF6_table(dimensions, n_searches, workbook, worksheet, curr_row)
+    # Schaffer F6, only defined for 2D, reworked, done testing
+    #curr_row = table_header(workbook, worksheet, 'Schaffer F6', curr_row)
+    #curr_row = test_schafferF6_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
-    # Griewangk
-    # results = test_griewank_table(dimensions, n_searches)
-    # curr_row = add_header_to_table(worksheet, 'Griewank', curr_row)
-    # curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
+    # X
+    # Schaffer F7, needs at least 2D, reworked
+    #curr_row = table_header(workbook, worksheet, 'Schaffer F7', curr_row)
+    #curr_row = test_schafferF7_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
-    # Bohachevsky - only valid dimension is 2!
-    #results = test_bohachevsky_table([2], n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Bohachevsky', curr_row)
-    #curr_row = add_results_to_table(worksheet, [2], results, n_searches, curr_row)
+    # Shekel 5, only valid dimension is 4, reworked, done testing
+    #curr_row = table_header(workbook, worksheet, 'Shekel 5', curr_row)
+    #curr_row = test_shekel5_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
-    # Schaffer F6 - only valid dimension is 2!
-    #results = test_schafferF6_table([2], n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Schaffer F6', curr_row)
-    #curr_row = add_results_to_table(worksheet, [2], results, n_searches, curr_row)
+    # X
+    # Griewank, reworked
+    #curr_row = table_header(workbook, worksheet, 'Griewank', curr_row)
+    #curr_row = test_griewank_table(dimensions, n_searches, workbook, worksheet, curr_row)
+
+    # Bohachevsky F1, only defined for 2D, reworked, done testing
+    #curr_row = table_header(workbook, worksheet, 'Bohachevsky F1', curr_row)
+    #curr_row = test_bohachevksy_table(dimensions, n_searches, workbook, worksheet, curr_row)
+
+    # Bohachevsky F3, only defined for 2D, reworked, done testing
+    #curr_row = table_header(workbook, worksheet, 'Bohachevsky F3', curr_row)
+    #curr_row = test_bohachevksy3_table(dimensions, n_searches, workbook, worksheet, curr_row)
+
+    # Schwefel 4, reworked
+    curr_row = table_header(workbook, worksheet, 'Schwefel 4', curr_row)
+    curr_row = test_schwefel4_table(dimensions, n_searches, workbook, worksheet, curr_row)
+
+    # ----------
 
     # Schaffer F7
     #results = test_schafferF7_table(dimensions, n_searches)
@@ -631,21 +656,6 @@ def main():
     # Alpine2
     #results = test_alpine2_table(dimensions, n_searches)
     #curr_row = add_header_to_table(worksheet, 'Alpine2', curr_row)
-    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
-
-    # Bohachevsky 3 - only valid dimension is 2!
-    #results = test_bohachevsky3_table([2], n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Bohachevsky 3', curr_row)
-    #curr_row = add_results_to_table(worksheet, [2], results, n_searches, curr_row)
-
-    # Schwefel 4 - needs at least 2 dimensions!
-    #results = test_schwefel4_table(dimensions, n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Schwefel 4', curr_row)
-    #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
-
-    # Shekel 5 - only valid dimension is 4!
-    #results = test_shekel5_table(dimensions, n_searches)
-    #curr_row = add_header_to_table(worksheet, 'Shekel 5', curr_row)
     #curr_row = add_results_to_table(worksheet, dimensions, results, n_searches, curr_row)
 
     # Paviani - 10 dimensional problem

@@ -18,8 +18,8 @@ class Schwefel4Space:
 
     def compute_value(self):
         self.y = 0
-        for i in range(1, Schwefel4Space.n_dimensions):
-            self.y = self.y + (self.x[i] - 1)**2 + (self.x[0] - self.x[i]**2)**2
+        for i in range(0, Schwefel4Space.n_dimensions):
+            self.y = self.y + math.pow(self.x[i] - 1, 2) + math.pow(self.x[0] - math.pow(self.x[i], 2), 2)
         return self.y
 
     def set_solution(self, sol):
@@ -35,7 +35,7 @@ class Schwefel4Space:
             else:
                 new_x.append(self.x[i] + random.uniform(-Schwefel4Space.eps, Schwefel4Space.eps))
                 if new_x[i] - Schwefel4Space.low_bound < 0:
-                    new_x[i] = Schwefel4Space.low_bound * random.uniform(0.88, 0.98)
+                    new_x[i] = random.uniform(0.001, 0.999)  # bugfix!
                 if new_x[i] - Schwefel4Space.up_bound > 0:
                     new_x[i] = Schwefel4Space.up_bound * random.uniform(0.88, 0.98)
         self.set_solution(new_x)
