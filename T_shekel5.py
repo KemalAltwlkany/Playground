@@ -5,7 +5,7 @@ import math as math
 #   search space is limited to [0, 10]
 #   search space needs to be at least 2 dimensional!
 class Shekel5Space:
-    eps = 1
+    eps = 0.01
     n_dimensions = 4
     up_bound = 10
     low_bound = 0
@@ -40,7 +40,7 @@ class Shekel5Space:
             else:
                 new_x.append(self.x[i] + random.uniform(-Shekel5Space.eps, Shekel5Space.eps))
                 if new_x[i] - Shekel5Space.low_bound < 0:
-                    new_x[i] = Shekel5Space.low_bound * random.uniform(0.88, 0.98)
+                    new_x[i] = random.uniform(0.001, 0.999)  # bugfix!
                 if new_x[i] - Shekel5Space.up_bound > 0:
                     new_x[i] = Shekel5Space.up_bound * random.uniform(0.88, 0.98)
         self.set_solution(new_x)

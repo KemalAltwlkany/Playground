@@ -5,7 +5,7 @@ import math as math
 #   f(x)= -1* 2.8081311800070053291**n_dim
 #   search space is limited to [0, 10]
 class Alpine2Space:
-    eps = 1
+    eps = 0.01
     n_dimensions = 5
     up_bound = 10
     low_bound = 0
@@ -35,7 +35,7 @@ class Alpine2Space:
             else:
                 new_x.append(self.x[i] + random.uniform(-Alpine2Space.eps, Alpine2Space.eps))
                 if new_x[i] - Alpine2Space.low_bound < 0:
-                    new_x[i] = Alpine2Space.low_bound * random.uniform(0.88, 0.98)
+                    new_x[i] = random.uniform(0.001, 0.999)  # bugfix!
                 if new_x[i] - Alpine2Space.up_bound > 0:
                     new_x[i] = Alpine2Space.up_bound * random.uniform(0.88, 0.98)
         self.set_solution(new_x)

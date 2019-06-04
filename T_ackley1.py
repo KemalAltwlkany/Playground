@@ -38,7 +38,7 @@ class Ackley1Space:
                 new_x.append(random.uniform(Ackley1Space.low_bound, Ackley1Space.up_bound))
             else:
                 #PROMIJENIO U RANDOM.CHOICE!!!!!!!!!!!!!!!!-------------------------------------------------------------
-                new_x.append(self.x[i] + random.choice([-Ackley1Space.eps, Ackley1Space.eps]))
+                new_x.append(self.x[i] + random.uniform(-Ackley1Space.eps, Ackley1Space.eps))
                 if new_x[i] - Ackley1Space.low_bound < 0:
                     new_x[i] = Ackley1Space.low_bound * random.uniform(0.88, 0.98)
                 if new_x[i] - Ackley1Space.up_bound > 0:

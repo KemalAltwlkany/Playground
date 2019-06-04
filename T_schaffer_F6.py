@@ -18,7 +18,7 @@ class SchafferF6Space:
     # WARNING - ONLY WORKS FOR 2D FUNCTIONS!
     def compute_value(self):
         pom = self.x[0]**2 + self.x[1]**2
-        self.y = (math.sin(math.sqrt(pom))**2 - 0.5) / ((1 + 0.001*pom)**2) + 0.5
+        self.y = (math.pow(math.sin(math.sqrt(pom)), 2) - 0.5) / (math.pow((1 + 0.001*pom), 2)) + 0.5
         return self.y
 
     def set_solution(self, sol):

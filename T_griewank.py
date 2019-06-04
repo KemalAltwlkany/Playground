@@ -6,8 +6,8 @@ import math as math
 class GriewankSpace:
     eps = 1
     n_dimensions = 10
-    up_bound = 100
-    low_bound = -100
+    up_bound = 600
+    low_bound = -600
 
     def __init__(self):
         self.x = []
@@ -20,7 +20,7 @@ class GriewankSpace:
         pom1 = 0
         pom2 = 1
         for i in range(GriewankSpace.n_dimensions):
-            pom1 = self.x[i]**2 + pom1
+            pom1 = math.pow(self.x[i], 2) + pom1
             pom2 = math.cos(self.x[i] / math.sqrt(i+1)) * pom2
         pom1 = pom1 / 4000
         self.y = pom1 - pom2 + 1

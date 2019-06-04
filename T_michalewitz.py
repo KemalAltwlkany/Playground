@@ -1,7 +1,7 @@
 from basic_playground import *
 import math as math
 
-#   global minimum is obtainable for xi=0, f(x)=0
+#   global minimum is obtainable for xi=-0.9, f(x)=0
 #   search space is limited to [-100, 100]
 class SchafferF7Space:
     eps = 1
@@ -19,8 +19,8 @@ class SchafferF7Space:
         self.y = 0
         pom = 1/(SchafferF7Space.n_dimensions - 1)
         for i in range(SchafferF7Space.n_dimensions-1):
-            si = math.sqrt(math.pow(self.x[i], 2) + math.pow(self.x[i+1], 2))
-            self.y = self.y + math.pow(pom * math.sqrt(si) * (math.sin(50 * (math.pow(si, 0.2))) + 1), 2)
+            si = math.sqrt(self.x[i]**2 + self.x[i+1]**2)
+            self.y = self.y + (pom * math.sqrt(si) * (math.sin(50 * (si**0.2)) + 1))**2
         return self.y
 
     def set_solution(self, sol):
@@ -36,12 +36,9 @@ class SchafferF7Space:
             else:
                 new_x.append(self.x[i] + random.uniform(-SchafferF7Space.eps, SchafferF7Space.eps))
                 if new_x[i] - SchafferF7Space.low_bound < 0:
-                    # 02.06. change
-                    # new_x[i] = SchafferF7Space.low_bound * random.uniform(0.88, 0.98)
-                    new_x[i] = random.uniform(SchafferF7Space.low_bound, SchafferF7Space.up_bound)
+                    new_x[i] = SchafferF7Space.low_bound * random.uniform(0.88, 0.98)
                 if new_x[i] - SchafferF7Space.up_bound > 0:
-                    # new_x[i] = SchafferF7Space.up_bound * random.uniform(0.88, 0.98)
-                    new_x[i] = random.uniform(SchafferF7Space.low_bound, SchafferF7Space.up_bound)
+                    new_x[i] = SchafferF7Space.up_bound * random.uniform(0.88, 0.98)
         self.set_solution(new_x)
 
     def get_value(self):
