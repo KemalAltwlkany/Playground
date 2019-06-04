@@ -43,9 +43,10 @@ def add_search_to_table(workbook, worksheet, dimension, curr_row, results, optim
     for i in range(len(results)):
         distance = results[i][0].attribute.measure_difference(optimum)
         criteria = results[i][0].get_criteria()
-        dist_perc = distance*100/(search_space*1)  # distance in % of problem space
+        dist_perc = distance*100/(search_space*dimension)  # distance in % of problem space
         # CAREFUL FOR DIVISION BY ZERO IN CASE OF OPTIMAL CRITERIA = 0
-        crit_perc = 100 * math.fabs(criteria)  # % of criteria
+        crit_perc = 100 * math.fabs((criteria - optimum.get_value()) / optimum.get_value())  # % of criteria
+        #crit_perc = 100*math.fabs(criteria)
         worksheet.write(curr_row, 0, i+1, bold)
         worksheet.write(curr_row, 1, distance)
         worksheet.write(curr_row, 2, dist_perc)
@@ -101,9 +102,9 @@ def validate_optimum(x, y, tolerance):
 # test a single n-dimensional Rastrigin function, REWORKED
 def single_rastrigin(n):
     RastriginSpace.n_dimensions = n
-    playground_obj = Playground(400, 9, RastriginSpace, 5000, 35, 0.0001, 0.0001, 200)
+    playground_obj = Playground(50, 3, RastriginSpace, 5000, 13, 0.0001, 0.0001, 200)
     start = time.time()
-    playground_obj.matchday_search(3)
+    playground_obj.matchday_search(4)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
@@ -178,7 +179,7 @@ def test_schwefel_table(p, q, workbook, worksheet, curr_row):
 # test a single n-dimensional Griewank function, REWORKED
 def single_griewank(n):
     GriewankSpace.n_dimensions = n
-    playground_obj = Playground(700, 12, GriewankSpace, 5000, 50, 0.0001, 0.0001, 200)
+    playground_obj = Playground(120, 5, GriewankSpace, 5000, 18, 0.0001, 0.0001, 600)
     start = time.time()
     playground_obj.matchday_search(3)
     end = time.time()
@@ -193,7 +194,7 @@ def test_griewank_table(p, q, workbook, worksheet, curr_row):
     print('******************************* RUNNING GRIEWANK FUNCTION TESTS *************************************')
     GriewankSpace.up_bound = 600
     GriewankSpace.low_bound = -600
-    GriewankSpace.eps = 0.05
+    GriewankSpace.eps = 0.01
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
         iteration_results = []
@@ -328,7 +329,7 @@ def test_schafferF7_table(p, q, workbook, worksheet, curr_row):
         curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 200)
     return curr_row
 
-# test a single n-dimensional Rosenbrock function
+# needs an update
 def single_rosenbrock(n):
     RosenbrockSpace.n_dimensions = n
     RosenbrockSpace.up_bound = 2.048
@@ -342,6 +343,7 @@ def single_rosenbrock(n):
     optimum = copy.deepcopy(playground_obj.get_optimum())
     return [optimum.attribute.x, optimum.get_criteria()]
 
+#needs an update
 def test_rosenbrock_table(p, q):
     dimensions = p
     n_searches = q
@@ -364,7 +366,7 @@ def test_rosenbrock_table(p, q):
         search_results.append(n_optimums_found)
     return search_results
 
-# test a single n-dimensional Ackley function
+# needs an update
 def single_ackley1(n):
     Ackley1Space.n_dimensions = n
     Ackley1Space.up_bound = 35
@@ -378,6 +380,7 @@ def single_ackley1(n):
     optimum = copy.deepcopy(playground_obj.get_optimum())
     return [optimum.attribute.x, optimum.get_criteria()]
 
+# needs to be updated
 def test_ackley1_table(p, q):
     dimensions = p
     n_searches = q
@@ -400,42 +403,43 @@ def test_ackley1_table(p, q):
         search_results.append(n_optimums_found)
     return search_results
 
-
-# test a single n-dimensional Ackley function
+# test a single n-dimensional Alpine 2 function, REWORKED
 def single_alpine2(n):
     Alpine2Space.n_dimensions = n
-    Alpine2Space.up_bound = 10
-    Alpine2Space.low_bound = 0
-    Alpine2Space.eps = 0.001
-    playground_obj = Playground(200, 6, Alpine2Space, 5000, 30, 0.00000001, 0.00000001, 350)
+    playground_obj = Playground(50, 3, Alpine2Space, 6000, 13, 0.000001, 0.000001, 300)
     start = time.time()
-    playground_obj.matchday_search(3)
+    playground_obj.matchday_search(6)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
+    return [optimum, end-start]
 
-def test_alpine2_table(p, q):
+#   REWORKED
+def test_alpine2_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
-    search_results = []
-    print('******************************* RUNNING ALPINE2 FUNCTION TESTS *************************************')
+    print('******************************* RUNNING ALPINE 2 FUNCTION TESTS *************************************')
+    Alpine2Space.up_bound = 10
+    Alpine2Space.low_bound = 0
+    Alpine2Space.eps = 0.001
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [7.9170526982459462172 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_alpine2(n)
-            real_optimum = [7.9170526982 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.396):
+            result = single_alpine2(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, n/100):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = Alpine2Space()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 10)
+    return curr_row
 
 # test a single 2-D Bohachevsky F3 function, REWORKED
 def single_bohachevksy3(n):
@@ -551,52 +555,54 @@ def test_shekel5_table(p, q, workbook, worksheet, curr_row):
         curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 200)
     return curr_row
 
-# test a single n-dimensional Shekel 5 function
+# test a single 10D paviani function, REWORKED
 def single_paviani(n):
     PavianiSpace.n_dimensions = n
-    PavianiSpace.up_bound = 9.999
-    PavianiSpace.low_bound = 2.001
-    PavianiSpace.eps = 0.01
-    playground_obj = Playground(200, 6, PavianiSpace, 5000, 30, 0.0001, 0.0001, 200)
+    playground_obj = Playground(200, 6, PavianiSpace, 5000, 30, 0.00001, 0.00001, 200)
     start = time.time()
-    playground_obj.matchday_search(5)
+    playground_obj.matchday_search(3)
     end = time.time()
     print("The matchday algorithm ran for, t = ", end - start)
     optimum = copy.deepcopy(playground_obj.get_optimum())
-    return [optimum.attribute.x, optimum.get_criteria()]
+    return [optimum, end-start]
 
-def test_paviani_table(p, q):
+#   REWORKED
+def test_paviani_table(p, q, workbook, worksheet, curr_row):
     dimensions = p
     n_searches = q
-    search_results = []
     print('******************************* RUNNING PAVIANI FUNCTION TESTS *************************************')
+    PavianiSpace.up_bound = 9.999
+    PavianiSpace.low_bound = 2.001
+    PavianiSpace.eps = 0.01
     for n in dimensions:
         print('---->>>>---->>>>---->>>>---->>>>---- DIMENSIONS= ', n, ' ----<<<<----<<<<----<<<<----<<<<----')
-        n_optimums_found = 0
+        iteration_results = []
+        raw_optimum = [9.350266 for k in range(n)]
         for i in range(1, n_searches+1):
             print('---->>>>---->>>>---->>>>---->>>>---- iteration ', i, ' ----<<<<----<<<<----<<<<----<<<<----')
-            optimum = single_paviani(n)
-            real_optimum = [9.350266 for k in range(n)]
-            if validate_optimum(optimum[0], real_optimum, 0.4675):
+            result = single_paviani(n)
+            iteration_results.append(result)
+            if validate_optimum(result[0].attribute.x, raw_optimum, 0.4675):
                 print('The real optimum has been found!')
-                n_optimums_found += 1
             else:
                 print('This is not the real optimum!')
             print('-------------------------------------------------------------------------------------------')
         print('***************************************************************************************************')
-        search_results.append(n_optimums_found)
-    return search_results
+        optimum = PavianiSpace()
+        optimum.set_solution(raw_optimum)
+        curr_row = add_search_to_table(workbook, worksheet, n, curr_row, iteration_results, optimum, 9.999-2.001)
+    return curr_row
 
 
 def main():
 
-    workbook = xlsxwriter.Workbook('new_schwefel4_11_15.xlsx')
+    workbook = xlsxwriter.Workbook('new_paviani.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 6, 25)
     curr_row = 0
 
-    dimensions = [16]
-    n_searches = 50
+    dimensions = [10]
+    n_searches = 100
 
     # Schwefel, reworked, done testing
     #curr_row = table_header(workbook, worksheet, 'Schwefel', curr_row)
@@ -633,8 +639,16 @@ def main():
     #curr_row = test_bohachevksy3_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
     # Schwefel 4, reworked
-    curr_row = table_header(workbook, worksheet, 'Schwefel 4', curr_row)
-    curr_row = test_schwefel4_table(dimensions, n_searches, workbook, worksheet, curr_row)
+    #curr_row = table_header(workbook, worksheet, 'Schwefel 4', curr_row)
+    #curr_row = test_schwefel4_table(dimensions, n_searches, workbook, worksheet, curr_row)
+
+    # Alpine2, reworked
+    #curr_row = table_header(workbook, worksheet, 'Alpine 2', curr_row)
+    #curr_row = test_alpine2_table(dimensions, n_searches, workbook, worksheet, curr_row)
+
+    # Paviani, 10D, reworked
+    curr_row = table_header(workbook, worksheet, 'Paviani', curr_row)
+    curr_row = test_paviani_table(dimensions, n_searches, workbook, worksheet, curr_row)
 
     # ----------
 

@@ -5,7 +5,7 @@ import math as math
 #   f(x)= -1* 2.8081311800070053291**n_dim
 #   search space is limited to [0, 10]
 class Alpine2Space:
-    eps = 1
+    eps = 0.01
     n_dimensions = 5
     up_bound = 10
     low_bound = 0
